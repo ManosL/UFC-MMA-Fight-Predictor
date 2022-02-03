@@ -1,5 +1,6 @@
 # created by virtualenv automatically
-./bin/
-./env/
+bin/
+env/
 *.pyc
-./lib/
+lib/
+__pycache__/
