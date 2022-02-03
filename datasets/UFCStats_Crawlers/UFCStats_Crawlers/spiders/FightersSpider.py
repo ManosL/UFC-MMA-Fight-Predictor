@@ -9,10 +9,26 @@ class FightersSpider(scrapy.Spider):
     name = 'fighters_spider'
     start_urls = ['http://www.ufcstats.com/statistics/events/completed']
 
+    ######################## HELPER METHODS ##############################
+    def get_fighter_id_from_url(self, url):
+        id = re.match('^.*ufcstats.com/fighter-details/([a-zA-Z0-9]*)(\/|\?)?.*$', url).groups()[0]
+        assert(id != None)
+
+        return id
+    ######################################################################
+
+
     def parse(self,response):
         links = ['http://www.ufcstats.com/statistics/fighters?char=' + l + '&page=all'
                     for l in list(string.ascii_lowercase)]
-        
+
+        attr_row = ['Fighter ID', 'Fighter Name', 'Wins', 'Loses', 'Draws', 'Height', 'Weight', 'Reach', 'Stance', 'DOB', 'SLpM',
+                    'Str.Acc.', 'SApM', 'Str. Def.', 'TD Avg.', 'TD Acc.', 'TD Def.', 'Sub. Avg.']
+		
+        with open('../../UFC_Fighters.tsv','a') as fight_file:
+            tsv_writer = csv.writer(fight_file, delimiter='|')
+            tsv_writer.writerow(attr_row)
+
         for link in links:
             yield scrapy.Request(url=link,callback=self.letter_parse)
     
@@ -35,14 +51,18 @@ class FightersSpider(scrapy.Spider):
     def fighter_parse(self,response):
         final_row = []
 
+        # Getting fighter's ID
+        fighter_id = self.get_fighter_id_from_url(response.url)
+        final_row.append(fighter_id)
+
         # Getting fighter's name
         pg_title = response.css('h2.b-content__title')
 
         final_row.append(pg_title.css('span.b-content__title-highlight::text').get())
 
-        final_row[0] = re.sub('\n','',final_row[0])
-        final_row[0] = final_row[0].split()
-        final_row[0] = ' '.join(list(filter(lambda x: x != '',final_row[0])))
+        final_row[1] = re.sub('\n','',final_row[1])
+        final_row[1] = final_row[1].split()
+        final_row[1] = ' '.join(list(filter(lambda x: x != '',final_row[1])))
 
         # Getting fighter's record
 
@@ -97,7 +117,7 @@ class FightersSpider(scrapy.Spider):
                 final_row.append(elem)
 
         #EACH ROW CONTAINS
-        #[Fighter Name, Wins, Loses, Draws, Height, Weight, Reach, Stance, DOB, SLpM,
+        #[Fighter ID, Fighter Name, Wins, Loses, Draws, Height, Weight, Reach, Stance, DOB, SLpM,
         # Str.Acc., SApM, Str. Def., TD Avg., TD Acc., TD Def., Sub. Avg.]
 		
         with open('../../UFC_Fighters.tsv','a') as fight_file:

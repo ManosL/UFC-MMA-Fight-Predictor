@@ -53,6 +53,12 @@ class EventSpider(scrapy.Spider):
 		#print("TLF " + str(title_fight) + " WEIGHT CLASS " + weight_class)
 		return gender, title_fight, fight_weight_class
 
+	def get_fighter_id_from_url(self, url):
+		id = re.match('^.*ufcstats.com/fighter-details/([a-zA-Z0-9]*)(\/|\?)?.*$', url).groups()[0]
+		assert(id != None)
+
+		return id.strip()
+
 	##################### Web-Page parsing functions ##########################
 	def parse(self,response):
 		rows = response.css('tr.b-statistics__table-row')[2:]
@@ -97,7 +103,7 @@ class EventSpider(scrapy.Spider):
 		
 		event_name = self.process_event_name(event_name)
 
-		# Retrieving the weight class
+		# Retrieving the weight class + other info about the fight
 		bout_desc = response.css('''div.b-fight-details__fight div.b-fight-details__fight-head
 							i.b-fight-details__fight-title''').get()
 
@@ -108,7 +114,7 @@ class EventSpider(scrapy.Spider):
 		fighters = response.css('div.b-fight-details__persons.clearfix')
 		fighters = fighters.css('div.b-fight-details__person')
 
-		# The result will be written by first fighter's written 
+		# The result will be written by first fighter's written,
 		# perspective
 
 		result = fighters[0].css('i.b-fight-details__person-status.b-fight-' +
@@ -139,17 +145,29 @@ class EventSpider(scrapy.Spider):
 		fighter1 = fighters[0]
 		fighter2 = fighters[1]
 
-		# Gives fighter the full name and nickname
-		fighter1_info.append(fighter1.css('''div.b-fight-details__person-text 
-					h3.b-fight-details__person-name
-					a::text''').get().strip())
+		# Gives fighter ID, the full name and nickname
+		fighter1_id = fighter1.css('''div.b-fight-details__person-text 
+									h3.b-fight-details__person-name
+									a::attr(href)''').get().strip()
+
+		if fighter1_id is None:
+			fighter1_id = fighter1.css('''div.b-fight-details__person-text 
+										h3.b-fight-details__person-name
+										span.b-link.b-fight-details__person-link::attr(href)''').get().strip()
+
+		fighter1_id = self.get_fighter_id_from_url(fighter1_id)
+		fighter1_info.append(fighter1_id)
+
+		fighter1_name = fighter1.css('''div.b-fight-details__person-text 
+									h3.b-fight-details__person-name
+									a::text''').get().strip()
 		
-		if fighter1_info[0] is None:
-			fighter1_info = [
-					fighter1.css('''div.b-fight-details__person-text 
-					h3.b-fight-details__person-name
-					span.b-link.b-fight-details__person-link::text''').get().strip()
-			]
+		if fighter1_name is None:
+			fighter1_name = fighter1.css('''div.b-fight-details__person-text 
+										h3.b-fight-details__person-name
+										span.b-link.b-fight-details__person-link::text''').get().strip()
+
+		fighter1_info.append(fighter1_name)
 
 		fighter1_nickname = fighter1.css('''div.b-fight-details__person-text 
 					p.b-fight-details__person-title::text''').get()
@@ -161,16 +179,29 @@ class EventSpider(scrapy.Spider):
 		else:
 			fighter1_info.append(fighter1_nickname.groups()[1].strip())
 
-		fighter2_info.append(fighter2.css('''div.b-fight-details__person-text 
-					h3.b-fight-details__person-name
-					a::text''').get().strip())
+		fighter2_id = fighter2.css('''div.b-fight-details__person-text 
+									h3.b-fight-details__person-name
+									a::attr(href)''').get().strip()
 
-		if fighter2_info[0] is None:
-			fighter2_info = [
-					fighter2.css('''div.b-fight-details__person-text 
-					h3.b-fight-details__person-name
-					span::text''').get().strip()
-			]
+		if fighter2_id is None:
+			fighter2_id = fighter2.css('''div.b-fight-details__person-text 
+										h3.b-fight-details__person-name
+										span.b-link.b-fight-details__person-link::attr(href)''').get().strip()
+
+		fighter2_id = self.get_fighter_id_from_url(fighter2_id)
+		fighter2_info.append(fighter2_id)
+
+		fighter2_name = fighter2.css('''div.b-fight-details__person-text 
+									h3.b-fight-details__person-name
+									a::text''').get().strip()
+		
+		if fighter2_name is None:
+			print('KAPOTAS URL', response.url)
+			fighter2_name = fighter2.css('''div.b-fight-details__person-text 
+										h3.b-fight-details__person-name
+										span.b-link.b-fight-details__person-link::text''').get().strip()
+
+		fighter2_info.append(fighter2_name)
 
 		fighter2_nickname = fighter2.css('''div.b-fight-details__person-text 
 					p.b-fight-details__person-title::text''').get()
@@ -182,11 +213,12 @@ class EventSpider(scrapy.Spider):
 		else:
 			fighter2_info.append(fighter2_nickname.groups()[1])
 
+		# Gives to fight info [result,method,round,time,match round mode]
+
 		fight = response.css('''div.b-fight-details__fight div.b-fight-details__content
 							p.b-fight-details__text''')[0]
 
-		# Gives to fight info [result,method,round,time,match round mode]
-		fight_info.append(fight.css('i.b-fight-details__text-item_first i::text').getall()[1])
+		fight_info.append(fight.css('i.b-fight-details__text-item_first i::text').getall()[1].strip())
 
 		items = fight.css('i.b-fight-details__text-item').getall()[0:3]
 
@@ -233,8 +265,8 @@ class EventSpider(scrapy.Spider):
 		""" WRITING TO tsv FILE """
 		"""EACH LINE HAS THE FORM
 		TOTAL LINE PERCENT I SHOULD ADD IT MYSELF
-		[Fight Date, Gender, Weight Class, Title Fight, Result,Method,Round,Time,Fight Time Format,Fighter 1 Name, Fighter 1 Nickname,
-		Fighter 1 Knock Downs, Fighter 1 Sign.Strikes Done,Fighter 1 Sign.Strikes Attempted,
+		[Fight Date, Gender, Weight Class, Title Fight, Result,Method,Round,Time,Fight Time Format,Fighter 1 ID, Fighter 1 Name, 
+		Fighter 1 Nickname, Fighter 1 Knock Downs, Fighter 1 Sign.Strikes Done,Fighter 1 Sign.Strikes Attempted,
 		Fighter 1 Sign.Strikes Perc.,Fighter 1 Total Strikes Done,
 		Fighter 1 Total Strikes Attempted,
 		Fighter 1 Takedowns Done, Fighter 1 Takedowns Attempted, Fighter 1 Takedowns Perc.,
