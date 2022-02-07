@@ -33,7 +33,7 @@ command:
 
 WARNING: This will take time in order to complete.
 
-While running this program you will see logs in terminal and the graphs except the correlation matrix
+While running this program you will see logs in terminal and the graphs, except the correlation matrix,
 will be opened in browser.
 
 ### Demo instructions
