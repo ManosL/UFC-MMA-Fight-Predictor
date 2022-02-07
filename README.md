@@ -40,12 +40,12 @@ will be opened in browser.
 
 In order to run the demo you should move again into the `src/` directory and run the following command:
 ```
-        python3 demo.py -t <training_dataset_path> -f <fighters_dataset_path> -p <prediction_dataset_path>
+python3 demo.py -t <training_dataset_path> -f <fighters_dataset_path> -p <prediction_dataset_path>
 ```
 where the names of those variables are pretty descriptive, but we should also mention the following:
 - Because the default datasets are in `src/data` folder the required command to run the demo is the following:
 ```
-        python3 demo.py -t ./data/Fights.csv -f ./data/Fighters.csv -p ./data/Matchups.csv
+python3 demo.py -t ./data/Fights.csv -f ./data/Fighters.csv -p ./data/Matchups.csv
 ```
 I defined those parameters in case someone wants to run the demo with different datasets, but with the same
 form.
