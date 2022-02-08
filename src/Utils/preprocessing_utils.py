@@ -56,9 +56,7 @@ def keep_valid_result_rows(X, Y):
     
     new_X.reset_index(drop=True, inplace=True)
     new_Y.reset_index(drop=True, inplace=True)
-    
-    print(new_X)
-    print(new_Y)
+
     return new_X, new_Y
 
 

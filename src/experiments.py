@@ -21,7 +21,7 @@ from train_utils import RepeatedKFoldCrossValidation, ClassifierGridSearch
 from preprocessing import basic_preprocessing, eda_preprocessing
 from preprocessing import dim_reduction_preprocessing, before_train_preprocessing
 
-from eda import dim_reduction_eda
+from eda import dim_reduction_eda, correlation_matrices_eda
 
 from train    import trainClassifierAndPlotResults, evaluateClassifiersTraining
 from train    import evaluateBestClassifiers
@@ -40,15 +40,15 @@ def prepare_best_classifiers_for_training():
     }
 
     knn_params = {
-        'n_neighbors': 75
+        'n_neighbors': 10
     }
 
     svm_params = {
-        'C': 1.0,
+        'C': 50.0,
     }
 
     decision_tree_params = {
-        'max_depth': 15
+        'max_depth': 5
     }
 
     random_forest_params = {
@@ -56,7 +56,7 @@ def prepare_best_classifiers_for_training():
     }
 
     ada_boost_params = {
-        'n_estimators': 100
+        'n_estimators': 75
     }
 
     clf_params_list = [logistic_regression_params, knn_params, svm_params,
@@ -111,15 +111,13 @@ def main():
     # Keeping the last 500 fights for validation
     X_validation = X.iloc[len(X) - 500:len(X), :]
     y_validation = y.iloc[len(y) - 500:len(y)]
-    print(y_validation.value_counts())
+
     X = X.iloc[0:len(X)-500, :]
     y = y.iloc[0:len(y)-500]
 
     print(X['Fighter_1_Stance'].unique())
     print('Columns of label dataframe:', Y.columns)
-
-    print(X.head(5))
-
+    
     # Getting the other forms of the dataset that we will do
     # Dimensionality Reduction
     X_og,           y_og           = X, y
@@ -135,6 +133,8 @@ def main():
     dim_reduction_eda(dr_X_og, y_og, dr_X_doubled, y_doubled, dr_X_diff, y_diff,
                     dr_X_doubled_diff, y_doubled_diff)
 
+    correlation_matrices_eda(dr_X_og, dr_X_doubled, dr_X_diff, dr_X_doubled_diff)
+
     # Getting ready to train and test
     train_X, train_y = pd.DataFrame(X), pd.Series(y)
     
@@ -144,26 +144,28 @@ def main():
     evaluateClassifiersTraining(clf_refs, clf_params_list,
                             train_X, train_y, 6, 2,
                             after_split_preprocessing_fn=before_train_preprocessing)
-    
+ 
     # Evaluate the best of the best in different versions of the dataset
 
     best_clf_refs, best_clf_params = prepare_best_classifiers_for_training()
     evaluateBestClassifiers(best_clf_refs, best_clf_params, train_X, train_y,
                             X_validation, y_validation,
-                            5, 2, before_train_preprocessing)
+                            6, 2, before_train_preprocessing)
 
     best_clf_refs, best_clf_params = prepare_best_classifiers_for_training()
     evaluateBestClassifiers(best_clf_refs, best_clf_params, train_X, train_y,
                             X_validation, y_validation,
-                            5, 2, before_train_preprocessing, {'to_double': True})
+                            6, 2, before_train_preprocessing, {'to_double': True})
 
     best_clf_refs, best_clf_params = prepare_best_classifiers_for_training()
     evaluateBestClassifiers(best_clf_refs, best_clf_params, train_X, train_y,
                             X_validation, y_validation,
-                            5, 2, before_train_preprocessing, {'to_double': True, 'to_diff': True})
-    #print(X_double)
-    #print(X_diff)
-    #print(X_double_diff)
+                            6, 2, before_train_preprocessing, {'to_diff': True})
+
+    best_clf_refs, best_clf_params = prepare_best_classifiers_for_training()
+    evaluateBestClassifiers(best_clf_refs, best_clf_params, train_X, train_y,
+                            X_validation, y_validation,
+                            6, 2, before_train_preprocessing, {'to_double': True, 'to_diff': True})
 
     return 0
 

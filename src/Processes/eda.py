@@ -1,9 +1,16 @@
+import sys
+
+sys.path.append('../Utils')
+
 import numpy as np
 import pandas as pd
 
 from sklearn.manifold import TSNE
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+
+from preprocessing_utils import df_drop_columns
 
 
 
@@ -14,25 +21,26 @@ def dim_reduction_eda(X_og, y_og, X_double, y_double,
     tsne = TSNE(n_components=2)
     
     print('Start tSNE')
+
     X_og_reduced          = tsne.fit_transform(X_og.values)
     X_og_reduced          = pd.DataFrame(X_og_reduced)
 
-    print('Finished 1')
+    print('Finished for Original Dataset')
     
     X_double_reduced      = tsne.fit_transform(X_double.values)
     X_double_reduced      = pd.DataFrame(X_double_reduced)
     
-    print('Finished 2')
+    print('Finished for Double Dataset')
     
     X_diff_reduced        = tsne.fit_transform(X_diff.values)
     X_diff_reduced        = pd.DataFrame(X_diff_reduced)
     
-    print('Finished 3')
+    print('Finished for Difference Dataset')
     
     X_double_diff_reduced = tsne.fit_transform(X_double_diff.values)
     X_double_diff_reduced = pd.DataFrame(X_double_diff_reduced)
     
-    print('Finished 4')
+    print('Finished for Double Difference Dataset')
     
     # Plotting Dimensionality Reduction results of each dataset
     titles = [
@@ -88,4 +96,40 @@ def dim_reduction_eda(X_og, y_og, X_double, y_double,
         )
 
     fig.show()
+    return
+
+def correlation_matrices_eda(X_og, X_double, X_diff, X_double_diff):
+    # Dropping categorical features
+    new_X_og = df_drop_columns(X_og, ['Gender', 'Weight_Class', 'Title_Fight',
+                                    'Fight_Time_Format', 'Fighter_1_Stance',
+                                    'Fighter_2_Stance'])
+
+    new_X_double = df_drop_columns(X_double, ['Gender', 'Weight_Class', 'Title_Fight',
+                                    'Fight_Time_Format', 'Fighter_1_Stance',
+                                    'Fighter_2_Stance'])
+
+    new_X_diff = df_drop_columns(X_diff, ['Gender', 'Weight_Class', 'Title_Fight',
+                                    'Fight_Time_Format', 'Fighter_1_Stance',
+                                    'Fighter_2_Stance'])
+
+    new_X_double_diff = df_drop_columns(X_double_diff, ['Gender', 'Weight_Class', 'Title_Fight',
+                                    'Fight_Time_Format', 'Fighter_1_Stance',
+                                    'Fighter_2_Stance'])
+
+    # Plotting the correlation matrixes
+    fig, axs = plt.subplots(2, 2)
+
+    axs[0, 0].matshow(new_X_og.corr())
+    axs[0, 0].set_title('Correlation matrix in Original Dataset')
+
+    axs[0, 1].matshow(new_X_double.corr())
+    axs[0, 1].set_title('Correlation matrix in Double Dataset')
+
+    axs[1, 0].matshow(new_X_diff.corr())
+    axs[1, 0].set_title('Correlation matrix in Difference Dataset')
+
+    axs[1, 1].matshow(new_X_double_diff.corr())
+    axs[1, 1].set_title('Correlation matrix in Double Difference Dataset')
+
+    plt.show()
     return

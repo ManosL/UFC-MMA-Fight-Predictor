@@ -7,6 +7,7 @@ sys.path.append('./Processes')
 from datetime import datetime
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
+from sklearn.ensemble     import AdaBoostClassifier, RandomForestClassifier
 
 from utils         import read_fights_data, read_fighters_data, read_matchup_data
 from preprocessing import basic_preprocessing, before_train_preprocessing
@@ -22,7 +23,7 @@ mma_weight_classes = ['atomweight', 'strawweight', 'flyweight', 'bantamweight', 
 def extract_args(argv):
     if len(argv) != 6:
         print("Invalid number of arguments")
-        print("Usage: python3 demo.py -t <train_dataset_path> -f <fights_df_path> -p <prediction_dataset_path>")
+        print("Usage: python3 demo.py -t <train_dataset_path> -f <fighters_df_path> -p <prediction_dataset_path>")
 
         return None, None, None
     
@@ -36,14 +37,14 @@ def extract_args(argv):
 
         if not os.path.isfile(arg_val):
             print("File " + arg_val + " does not exist or it is not a file.")
-            print("Usage: python3 demo.py -t <train_dataset_path> -f <fights_df_path> -p <prediction_dataset_path>")
+            print("Usage: python3 demo.py -t <train_dataset_path> -f <fighters_df_path> -p <prediction_dataset_path>")
 
             return None, None, None
 
         if curr_arg == '-t':
             if train_dataset_path is not None:
                 print("You already specified training dataset's path")
-                print("Usage: python3 demo.py -t <train_dataset_path> -f <fights_df_path> -p <prediction_dataset_path>")
+                print("Usage: python3 demo.py -t <train_dataset_path> -f <fighters_df_path> -p <prediction_dataset_path>")
 
                 return None, None, None
 
@@ -51,7 +52,7 @@ def extract_args(argv):
         elif curr_arg == '-f':
             if fighters_dataset_path is not None:
                 print("You already specified fighters dataset's path")
-                print("Usage: python3 demo.py -t <train_dataset_path> -f <fights_df_path> -p <prediction_dataset_path>")
+                print("Usage: python3 demo.py -t <train_dataset_path> -f <fighters_df_path> -p <prediction_dataset_path>")
 
                 return None, None, None
 
@@ -66,7 +67,7 @@ def extract_args(argv):
             matchups_dataset_path = arg_val 
         else:
             print("Invalid argument " + curr_arg)
-            print("Usage: python3 demo.py -t <train_dataset_path> -f <fights_df_path> -p <prediction_dataset_path>")
+            print("Usage: python3 demo.py -t <train_dataset_path> -f <fighters_df_path> -p <prediction_dataset_path>")
 
             return None, None, None
 
@@ -186,7 +187,7 @@ def create_matchup_features(matchups_df, fighters_df):
 
 def train_model(fights_data, fights_labels):
     # The best model found in our experiments is a LogisticRegression model
-    model = LogisticRegression(C=1.0, max_iter=10000)
+    model = RandomForestClassifier(n_estimators=150)
     model.fit(fights_data, fights_labels)
 
     return model
@@ -254,7 +255,7 @@ def main(train_dataset_path, fighters_dataset_path, matchups_path):
     fights_labels = fights_labels['Result']
 
     fights_df, fights_labels, prediction_df = before_train_preprocessing(fights_df, fights_labels, 
-                                                        prediction_df, to_double=True, to_diff=False)
+                                                        prediction_df, to_double=True, to_diff=True)
 
     # Training our model
     model = train_model(fights_df, fights_labels)
@@ -266,7 +267,7 @@ def main(train_dataset_path, fighters_dataset_path, matchups_path):
 
 """
 Plan for execution(it will run on the best classifier)
-python3 demo.py -t <train_dataset_path> -f <fights_df_path> -p <prediction_dataset_path>
+python3 demo.py -t <train_dataset_path> -f <fighters_df_path> -p <prediction_dataset_path>
 where: 
     1. Training set will be always be the ./data/Fights.csv and the dataset with the fighters will
     be the ./data/Fighters.csv.

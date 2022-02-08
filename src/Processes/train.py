@@ -1,5 +1,6 @@
 import itertools
 import sys
+import time
 
 sys.path.append('../Utils/')
 
@@ -7,6 +8,7 @@ import numpy  as np
 import pandas as pd
 
 from sklearn.metrics import accuracy_score, f1_score, confusion_matrix
+from sklearn.metrics import roc_curve, roc_auc_score
 
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
@@ -37,11 +39,18 @@ def evaluateBestClassifiers(clf_refs, clf_params, X, y, X_val, y_val, k=10, repe
     test_acc_std_list   = []
     validation_acc_list = []
 
-    mean_train_f1_list = []
-    train_f1_std_list  = []
-    mean_test_f1_list  = []
-    test_f1_std_list   = []
-    validation_f1_list = []
+    mean_train_f1_list  = []
+    train_f1_std_list   = []
+    mean_test_f1_list   = []
+    test_f1_std_list    = []
+    validation_f1_list  = []
+
+    # Keeping the train and prediction times per sample in order to show
+    # the performance of chosen classifiers, in order to see
+    # how they'll perform in demo, thus, choose the best one
+    # taking into account the other metrics
+    train_times_ms      = []
+    prediction_times_ms = []
 
     for clf_ref, clf_kwargs in zip(clf_refs, clf_params):
         clf = clf_ref(**clf_kwargs)
@@ -57,10 +66,18 @@ def evaluateBestClassifiers(clf_refs, clf_params, X, y, X_val, y_val, k=10, repe
             curr_X, curr_y, curr_X_val, curr_y_val = after_split_preprocessing_fn(new_X,
                                                 new_y, new_X_val, new_y_val, **kwargs)
 
+        time_train_ms = time.time()
+
         clf.fit(curr_X, curr_y)
+        
+        time_train_ms = ((time.time() - time_train_ms) / len(curr_X)) * 1000
+
+        predict_time_ms = time.time()
 
         y_val_preds    = clf.predict(curr_X_val)
         
+        predict_time_ms = ((time.time() - predict_time_ms) / len(curr_X_val)) * 1000
+
         validation_acc = accuracy_score(curr_y_val, y_val_preds)
         validation_f1  = f1_score(curr_y_val, y_val_preds, average='macro')
 
@@ -77,6 +94,9 @@ def evaluateBestClassifiers(clf_refs, clf_params, X, y, X_val, y_val, k=10, repe
         mean_test_f1_list.append(test_mean_f1)
         test_f1_std_list.append(test_f1_std)
         validation_f1_list.append(validation_f1)
+
+        train_times_ms.append(round(time_train_ms, 4))
+        prediction_times_ms.append(round(predict_time_ms, 4))
 
         confusion_matrices.append(conf_matrix.tolist())
     
@@ -115,8 +135,8 @@ def evaluateBestClassifiers(clf_refs, clf_params, X, y, X_val, y_val, k=10, repe
         fig.add_trace(go.Bar(name='Validation ' + metric, x=x_ticks, y=val_y_ticks),
                         row=row_num, col=1)
 
-    fig.update_layout(title='Best Classifiers training, testing and validation Accuracy and F1 Score with 95\% confidence intervals\
-                            with Repeated-K-Fold with k=' + str(k) + ' and ' + str(repeats) + ' repeats.')
+    fig.update_layout(title='Best Classifiers training, testing and validation Accuracy and F1 Score with 95\% confidence intervals' +
+                            'with Repeated-K-Fold with k=' + str(k) + ' and ' + str(repeats) + ' repeats.')
 
     fig.show()
 
@@ -127,12 +147,27 @@ def evaluateBestClassifiers(clf_refs, clf_params, X, y, X_val, y_val, k=10, repe
     fig = make_subplots(rows=1, cols=len(clf_refs), subplot_titles=cm_titles)
 
     for i, conf_matrix in zip(range(1, len(clf_refs) + 1),confusion_matrices):
-        fig.add_trace(go.Heatmap(z=conf_matrix, text=conf_matrix, x=confusion_matrix_labels,
-                                y=confusion_matrix_labels), row=1, col=i)
+        show_legend = True if i == 1 else False
 
-    fig.update_layout(yaxis = dict(scaleanchor = 'x'))
+        fig.add_trace(go.Heatmap(z=conf_matrix, text=conf_matrix, x=confusion_matrix_labels,
+                                y=confusion_matrix_labels, texttemplate='%{text}', textfont={"size":20},
+                                legendgroup=1, showlegend=show_legend), row=1, col=i)
+
+    fig.update_annotations(font_size=14)
 
     fig.show()
+
+    # Plotting the time performance of each classifier
+    fig = go.Figure()
+
+    fig.add_trace(go.Bar(name='Training time per sample(ms)',   x=x_ticks, y=train_times_ms))
+
+    fig.add_trace(go.Bar(name='Prediction time per sample(ms)', x=x_ticks, y=prediction_times_ms))
+
+    fig.update_layout(title='Best Classifiers Training and Validation Performance.')
+    
+    fig.show()
+
     return
 
 

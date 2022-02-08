@@ -196,7 +196,6 @@ class EventSpider(scrapy.Spider):
 									a::text''').get().strip()
 		
 		if fighter2_name is None:
-			print('KAPOTAS URL', response.url)
 			fighter2_name = fighter2.css('''div.b-fight-details__person-text 
 										h3.b-fight-details__person-name
 										span.b-link.b-fight-details__person-link::text''').get().strip()

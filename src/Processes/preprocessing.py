@@ -18,12 +18,11 @@ from preprocessing_utils import series_fillna_most_frequent, series_fillna_mean
 from preprocessing_utils import series_categorical_to_int, df_drop_columns
 from preprocessing_utils import double_dataset, fighter_stats_diff_dataset
 
+
+
 # In that function I will just do pretty basic preprocessing needed
 # to do EDA decently.
 def basic_preprocessing(X, Y=None):
-    print('NaN Values')
-    print(df_get_na(X))
-
     # Keeping only fights with result equal to win, lose or draw(if we provide Y)
     if Y is not None:
         X, Y = keep_valid_result_rows(X, Y)
@@ -44,10 +43,6 @@ def basic_preprocessing(X, Y=None):
 
     X['Fighter_1_Stance'] = series_fillna_most_frequent(X['Fighter_1_Stance'])
     X['Fighter_2_Stance'] = series_fillna_most_frequent(X['Fighter_2_Stance'])
-
-    print()
-    print('New NaN Values')
-    print(df_get_na(X))
 
     # Lowercase every str or categorical column that is not case sensitive
     str_columns = ['Gender', 'Weight_Class', 'Fight_Time_Format', 'Fighter_1_Name', 
@@ -132,17 +127,18 @@ def dim_reduction_preprocessing(X):
     # Splitting dates
     new_X['Fight_Date']= pd.to_datetime(new_X['Fight_Date'])
 
-    fight_year_series  = new_X['Fight_Date'].dt.year
-    fight_month_series = new_X['Fight_Date'].dt.month
-    fight_day_series   = new_X['Fight_Date'].dt.day
+    #fight_year_series  = new_X['Fight_Date'].dt.year
+    #fight_month_series = new_X['Fight_Date'].dt.month
+    #fight_day_series   = new_X['Fight_Date'].dt.day
 
-    new_X.insert(0, 'Fight_Year',  fight_year_series)
-    new_X.insert(0, 'Fight_Month', fight_month_series)
-    new_X.insert(0, 'Fight_Day',   fight_day_series)
+    #new_X.insert(0, 'Fight_Year',  fight_year_series)
+    #new_X.insert(0, 'Fight_Month', fight_month_series)
+    #new_X.insert(0, 'Fight_Day',   fight_day_series)
     
     new_X = df_drop_columns(new_X, ['Fight_Date'])
 
     # Scaling each numerical column, except the ones that denote percentage
+    # In percentage columns we divide by 100.
     scaler = MinMaxScaler()
 
     categorical_attrs = ['Gender', 'Title_Fight', 'Weight_Class', 'Fight_Time_Format', 
@@ -160,17 +156,19 @@ def dim_reduction_preprocessing(X):
             scale_vals = scaler.fit_transform(scale_vals)
 
             new_X[attr] = np.reshape(scale_vals, (scale_vals_len, ))
+        
+        if attr in percentage_attrs:
+            new_X[attr] = new_X[attr].apply(lambda x: float(x) / 100)
 
     # Converting categoricals to numericals
     _cat_attrs_to_int(new_X)
 
-    print(new_X)
     return new_X
 
 
 
 
-def _test_train_common_preprocessing(X, y):
+def _test_train_common_preprocessing(X, y, is_diff):
     # Dropping unnecessary columns
     new_X = df_drop_columns(X, ['Fight_ID', 'Fighter_1_ID', 'Fighter_1_Name', 
                                 'Fighter_1_Nickname', 'Fighter_2_ID',
@@ -215,10 +213,11 @@ def before_train_preprocessing(X_train, y_train, X_test, y_test=None, to_double=
         new_train_X = fighter_stats_diff_dataset(new_train_X)
         new_test_X  = fighter_stats_diff_dataset(new_test_X)
 
-    new_train_X, new_train_y = _test_train_common_preprocessing(new_train_X, new_train_y)
-    new_test_X,  new_test_y  = _test_train_common_preprocessing(new_test_X,  new_test_y)
+    new_train_X, new_train_y = _test_train_common_preprocessing(new_train_X, new_train_y, to_diff)
+    new_test_X,  new_test_y  = _test_train_common_preprocessing(new_test_X,  new_test_y,  to_diff)
 
     # Scaling each numerical column, except percentage features
+    # Percentage features are divided by 100
     scaler = MinMaxScaler()
 
     categorical_attrs = ['Gender', 'Title_Fight', 'Weight_Class', 'Fight_Time_Format', 
@@ -246,6 +245,10 @@ def before_train_preprocessing(X_train, y_train, X_test, y_test=None, to_double=
             new_train_X[attr] = np.reshape(train_scale_vals, (train_scale_vals_len, ))
             new_test_X[attr]  = np.reshape(test_scale_vals,  (test_scale_vals_len, ))
 
+        if attr in percentage_attrs:
+            new_train_X[attr] = new_train_X[attr].apply(lambda x: float(x) / 100)
+            new_test_X[attr]  = new_test_X[attr].apply(lambda x: float(x) / 100)
+    
     if new_test_y is not None:
         return new_train_X, new_train_y, new_test_X, new_test_y
     else:
