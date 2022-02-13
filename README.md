@@ -187,106 +187,111 @@ The predictions done are the following(**results are pending because the event i
         Robert Whittaker: 36.0
         draw: 0.0
 
-Actual Winner:
+Actual Winner: Israel Adesanya
 
 2. Derrick Lewis vs Tai Tuivasa
         Derrick Lewis: 47.33
         Tai Tuivasa: 50.0
         draw: 2.67
 
-Actual Winner:
+Actual Winner: Tai Tuivasa
 
 3. Jared Cannonier vs Derek Brunson
         Jared Cannonier: 38.67
         Derek Brunson: 61.33
         draw: 0.0
 
-Actual Winner:
+Actual Winner: Jared Cannonier
 
 4. Kyler Phillips vs Marcelo Rojo
         Kyler Phillips: 72.0
         Marcelo Rojo: 28.0
         draw: 0.0
 
-Actual Winner:
+Actual Winner: Kyler Philips
 
 5. Bobby Green vs Nasrat Haqparast
         Bobby Green: 40.0
         Nasrat Haqparast: 58.0
         draw: 2.0
 
-Actual Winner:
+Actual Winner: Bobby Green
 
 6. Andrei Arlovski vs Jared Vanderaa
         Andrei Arlovski: 50.67
         Jared Vanderaa: 48.0
         draw: 1.33
 
-Actual Winner:
+Actual Winner: Andrei Arlovski
 
 7. Roxanne Modafferi vs Casey O'Neill
         Roxanne Modafferi: 21.33
         Casey O'Neill: 78.67
         draw: 0.0
 
-Actual Winner:
+Actual Winner: Casey O'Neill
 
 8. Alex Perez vs Matt Schnell
         Alex Perez: 64.0
         Matt Schnell: 36.0
         draw: 0.0
 
-Actual Winner:
+Actual Winner: N/A
 
 9. William Knight vs Maxim Grishin
         William Knight: 59.33
         Maxim Grishin: 39.33
         draw: 1.33
 
-Actual Winner:
+Actual Winner: Maxim Grishin
 
 10. Mana Martinez vs Ronnie Lawrence
         Mana Martinez: 49.33
         Ronnie Lawrence: 49.33
         draw: 1.33
 
-Actual Winner:
+Actual Winner: Ronnie Lawrence
 
 11. Alexander Hernandez vs Renato Moicano
         Alexander Hernandez: 38.0
         Renato Moicano: 62.0
         draw: 0.0
 
-Actual Winner:
+Actual Winner: Renato Moicano
 
 12. Carlos Ulberg vs Fabio Cherant
         Carlos Ulberg: 52.67
         Fabio Cherant: 45.33
         draw: 2.0
 
-Actual Winner:
+Actual Winner: Carlos Ulberg
 
 13. AJ Dobson vs Jacob Malkoun
         AJ Dobson: 52.0
         Jacob Malkoun: 47.33
         draw: 0.67
 
-Actual Winner:
+Actual Winner: Jacob Malkoun
 
 14. Douglas Silva de Andrade vs Sergey Morozov
         Douglas Silva de Andrade: 32.0
         Sergey Morozov: 68.0
         draw: 0.0
 
-Actual Winner:
+Actual Winner: Douglas Silva de Andrade
 
 15. Jeremiah Wells vs Blood Diamond
         Jeremiah Wells: 42.67
         Blood Diamond: 56.0
         draw: 1.33
 
-Actual Winner:
+Actual Winner: Jeremiah Wells
 ```
+
+This means that my predictor achieved approximately 57% accuracy on this event, by predicting
+correctly 8 out of 14 fights which is not so good, especially considering the performance on last event.
+
+This means that our model is generally unstable considering its real-time performance in these two events. However, it is consoling that in most of the wrong prediction our model selects as winner the favorite fighter, given the odds of a bookmaker.
 
 **DISCLAIMER**: This project was done for educational purposes ONLY and does not support any
 betting activity that will result in addiction and property losing. However, if you want to
