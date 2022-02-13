@@ -56,7 +56,7 @@ form.
 where fighters' ID should be taken from dataset given in the `-f` parameter.
 - Demo trains a `RandomForestClassifier` with 150 estimators and the dataset is converted to be a
 Double Difference dataset, because with these configurations I saw that out classifier gave the best
-results. For more details, check `Report.pdf`.
+results. For more details, check `Machine_Learning_Report.pdf`.
 - Note that because I could not take the gender of the fighters from their pages, I find initially
 using a library, which is prone to error. Thus, there is a case that a correct matchup will raise
 an error related to making matchup between fighters of different gender.

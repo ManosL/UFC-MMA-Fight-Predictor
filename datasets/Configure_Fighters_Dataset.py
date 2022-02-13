@@ -312,7 +312,8 @@ def find_genders(fights_df, fighters_df):
         'Wagnney Fabiano': 'male',
         'Tokimitsu Ishizawa': 'male',
         'Egan Inoue': 'male',
-        'Seichi Ikemoto': 'male'
+        'Seichi Ikemoto': 'male',
+        'Tatsuro Taira': 'male'
     }
 
     d = gender.Detector()
