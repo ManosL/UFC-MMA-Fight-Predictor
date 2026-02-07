@@ -1,0 +1,21 @@
+# docker/Dockerfile.processing
+FROM python:3.11-slim
+
+WORKDIR /workspace
+
+# System deps if you need them (psycopg2, etc.)
+# RUN apt-get update && apt-get install -y build-essential libpq-dev && rm -rf /var/lib/apt/lists/*
+
+# Copy code & requirements
+COPY ../src/processing/ /workspace/
+COPY ../src/sql/ /workspace/sql/
+
+# If you have a requirements file for processing:
+# (adjust path to match your project)
+COPY ../src/processing/requirements.txt /tmp/requirements.txt
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONPATH=/workspace
+
+# No CMD here; Airflow will override with the script command

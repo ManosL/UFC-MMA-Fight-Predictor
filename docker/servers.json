@@ -1,0 +1,22 @@
+{
+  "Servers": {
+    "1": {
+      "Name": "Airflow Metadata",
+      "Group": "Airflow",
+      "Port": 5432,
+      "Username": "airflowadmin",
+      "Host": "postgres",
+      "SSLMode": "prefer",
+      "MaintenanceDB": "airflow"
+    },
+    "2": {
+      "Name": "Warehouse",
+      "Group": "Data",
+      "Port": 5432,
+      "Username": "warehouseadmin",
+      "Host": "postgres-1",
+      "SSLMode": "prefer",
+      "MaintenanceDB": "warehouse"
+    }
+  }
+}

@@ -1,0 +1,105 @@
+services:
+  minio:
+    image: minio/minio
+    env_file:
+      - .env
+    environment:
+      - MINIO_ROOT_USER=${MINIO_USERNAME}
+      - MINIO_ROOT_PASSWORD=${MINIO_PASSWORD}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001" --address ":9000"
+  postgres-1:
+    image: postgres:17
+    restart: on-failure
+    container_name: ${DATA_WAREHOUSE_POSTGRES_DB_NAME}-postgres
+    env_file:
+      - .env
+    environment:
+      - POSTGRES_DB=${DATA_WAREHOUSE_POSTGRES_DB_NAME}
+      - POSTGRES_USER=${DATA_WAREHOUSE_POSTGRES_USERNAME}
+      - POSTGRES_PASSWORD=${DATA_WAREHOUSE_POSTGRES_PASSWORD}
+    ports:
+      - "${DATA_WAREHOUSE_POSTGRES_HOST_PORT}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+  pgadmin:
+    image: dpage/pgadmin4
+    restart: on-failure
+    container_name: pgadmin
+    env_file:
+      - .env
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=${PGADMIN_EMAIL}
+      - PGADMIN_DEFAULT_PASSWORD=${PGADMIN_PASSWORD}
+    ports:
+      - "${PGADMIN_PORT}:80"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+      - ./servers.json:/pgadmin4/servers.json
+  scrapy-server:
+    image: flik007/scrapyd-server:latest
+    env_file:
+      - .env
+    environment:
+      - MINIO_USERNAME=${MINIO_USERNAME}
+      - MINIO_PASSWORD=${MINIO_PASSWORD}
+      - MINIO_RAW_DATA_BUCKET_NAME=${MINIO_RAW_DATA_BUCKET_NAME}
+      - SCRAPYD_USERNAME=${SCRAPYD_USERNAME}
+      - SCRAPYD_PASSWORD=${SCRAPYD_PASSWORD}
+    ports:
+      - "${SCRAPYDWEB_PORT}:5000"
+      - "${SCRAPYD_PORT}:6800"
+    volumes:
+      - scrapyd-config:/app/config
+      - scrapyd:/app/scrapyd
+      - ../UFCStats_Crawlers:/app/scrapyd/project/UFCStats_Crawlers
+      - ../UFCStats_Crawlers/requirements.txt:/requirements.txt
+    # command: >
+    #   bash -lc "
+    #     pip install -r /requirements.txt
+    #     && (cd /app/scrapyd/project/UFCStats_Crawlers && scrapyd-deploy --build-egg=UFCStats_Crawlers.egg)
+    #     && mkdir /app/scrapyd/eggs/UFCStats_Crawlers
+    #     && cp /app/scrapyd/project/UFCStats_Crawlers/UFCStats_Crawlers.egg /app/scrapyd/eggs/UFCStats_Crawlers
+    #   "
+  processing-python:
+    image: python:3.11-slim
+    working_dir: /workspace
+    volumes:
+      - ../src/processing:/workspace
+      - ../src/sql:/workspace/sql/
+      - pip-cache:/root/.cache/pip   # speed up pip installs
+    env_file:
+      - .env
+    environment:
+      - MINIO_USERNAME=${MINIO_USERNAME}
+      - MINIO_PASSWORD=${MINIO_PASSWORD}
+      - MINIO_RAW_DATA_BUCKET_NAME=${MINIO_RAW_DATA_BUCKET_NAME}
+      - DATA_WAREHOUSE_POSTGRES_DB_NAME=${DATA_WAREHOUSE_POSTGRES_DB_NAME}
+      - DATA_WAREHOUSE_POSTGRES_USERNAME=${DATA_WAREHOUSE_POSTGRES_USERNAME}
+      - DATA_WAREHOUSE_POSTGRES_PASSWORD=${DATA_WAREHOUSE_POSTGRES_PASSWORD}
+      - DATA_WAREHOUSE_POSTGRES_HOST_PORT=${DATA_WAREHOUSE_POSTGRES_HOST_PORT}
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/workspace
+    entrypoint: /bin/sh -lc
+    command: |
+      'python -m pip install --upgrade pip &&
+       if [ -f requirements.txt ]; then pip install -r requirements.txt; fi &&
+       echo "Pybox ready. Sleeping..." &&
+       tail -f /dev/null'
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import sys; sys.exit(0)'"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+volumes:
+  minio-data:
+  postgres-data:
+  pgadmin-data:
+  scrapyd:
+  scrapyd-config:
+  pip-cache:
