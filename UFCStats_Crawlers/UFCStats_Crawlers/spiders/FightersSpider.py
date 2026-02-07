@@ -1,7 +1,11 @@
+# TODO: EXPLOIT UTILS FOR THE MINIO STUFF THIS APPLIES EVERYWHERE
+import os
+import pandas as pd
 import string
 import scrapy
 import re
-import csv
+from minio import Minio
+from io import BytesIO
 
 event_dates = {}
 
@@ -9,31 +13,62 @@ class FightersSpider(scrapy.Spider):
     name = 'fighters_spider'
     start_urls = ['http://www.ufcstats.com/statistics/events/completed']
 
+    custom_settings = {
+        "ITEM_PIPELINES": {
+            "UFCStats_Crawlers.pipelines.UFCFightersGeneralStatsCrawlersPipeline": 300,
+        }
+    }
+
     ######################## HELPER METHODS ##############################
     def get_fighter_id_from_url(self, url):
-        id = re.match('^.*ufcstats.com/fighter-details/([a-zA-Z0-9]*)(\/|\?)?.*$', url).groups()[0]
+        id = re.match(r'^.*ufcstats.com/fighter-details/([a-zA-Z0-9]*)(\/|\?)?.*$', url).groups()[0]
         assert(id != None)
 
         return id
     ######################################################################
 
 
-    def parse(self,response):
-        links = ['http://www.ufcstats.com/statistics/fighters?char=' + l + '&page=all'
-                    for l in list(string.ascii_lowercase)]
+    def parse(self, response):
+        self.is_incremental = False if self.is_incremental.lower() == "false" else True
+        self.logger.debug(f'Will spider run incrementally: {self.is_incremental}')
 
-        attr_row = ['Fighter ID', 'Fighter Name', 'Wins', 'Loses', 'Draws', 'Height', 'Weight', 'Reach', 'Stance', 'DOB', 'SLpM',
-                    'Str.Acc.', 'SApM', 'Str. Def.', 'TD Avg.', 'TD Acc.', 'TD Def.', 'Sub. Avg.']
-		
-        with open('../../UFC_Fighters.tsv','a') as fight_file:
-            tsv_writer = csv.writer(fight_file, delimiter='|')
-            tsv_writer.writerow(attr_row)
+        self.attrs = ['Fighter ID', 'Fighter Name', 'Wins', 'Loses', 'Draws', 'Height',
+                    'Weight', 'Reach', 'Stance', 'DOB', 'SLpM', 'Str.Acc.', 'SApM',
+                    'Str. Def.', 'TD Avg.', 'TD Acc.', 'TD Def.', 'Sub. Avg.']
 
-        for link in links:
-            yield scrapy.Request(url=link,callback=self.letter_parse)
-    
-    def letter_parse(self,response):
-        
+        if self.is_incremental:
+            minio_client = Minio(
+                'minio:9000',
+                access_key=os.environ.get('MINIO_USERNAME'),
+                secret_key=os.environ.get('MINIO_PASSWORD'),
+                secure=False
+            )
+
+            response = minio_client.get_object(
+                os.environ.get("MINIO_RAW_DATA_BUCKET_NAME"),
+                "fight_new_actual_stats.csv"
+            )
+
+            event_data = pd.read_csv(BytesIO(response.read()), sep='|', header=0)
+
+            response.close()
+            response.release_conn()
+
+            all_fighter_ids = set(event_data['Fighter 1 ID']).union(set(event_data['Fighter 2 ID']))
+            self.logger.debug(f"Will crawl info for the following Fighter IDs: {all_fighter_ids}")
+
+            for fighter_id in all_fighter_ids:
+                next_url = f"http://ufcstats.com/fighter-details/{fighter_id}"
+
+                yield scrapy.Request(url=next_url, callback=self.fighter_parse)
+        else:
+            links = ['http://www.ufcstats.com/statistics/fighters?char=' + l + '&page=all'
+                        for l in list(string.ascii_lowercase)]
+
+            for link in links:
+                yield scrapy.Request(url=link, callback=self.letter_parse)
+
+    def letter_parse(self, response):
         links = []
 
         table_rows = response.css('table.b-statistics__table tbody tr.b-statistics__table-row')
@@ -47,8 +82,8 @@ class FightersSpider(scrapy.Spider):
         for link in links:
             yield scrapy.Request(url = link,callback = self.fighter_parse)
 
-    
-    def fighter_parse(self,response):
+
+    def fighter_parse(self, response):
         final_row = []
 
         # Getting fighter's ID
@@ -70,24 +105,24 @@ class FightersSpider(scrapy.Spider):
         record = re.sub('Record: ','',record)
         record = re.sub('\n','',record)
         record = re.sub(' ','',record)
-        record = re.sub('\(.*?\)','',record)
+        record = re.sub(r'\(.*?\)','',record)
         record = record.split('-')   # getting a list of form [win,lose,draw]
         record = [int(x) for x in record]
 
         final_row = final_row + record
 
         # Details table
-        dtls_table = response.css('div.b-fight-details.b-fight-details_margin-top')
-        
+        details_table = response.css('div.b-fight-details.b-fight-details_margin-top')
+
         # Getting first sub-table
-        curr_table = dtls_table.css('div.b-list__info-box.' +
+        curr_table = details_table.css('div.b-list__info-box.' +
                             'b-list__info-box_style_small-width.js-guide ' +
                             'ul.b-list__box-list')
 
         curr_table = curr_table.css('li.b-list__box-list-item.' +
                                 'b-list__box-list-item_type_block').getall()
 
-        
+
         for elem in curr_table:
             elem = re.sub('\n','',elem)
             elem = re.match('<li (.*?)>(.*)</li>',elem).groups()[1]
@@ -95,17 +130,17 @@ class FightersSpider(scrapy.Spider):
             elem = ' '.join(list(filter(lambda x: x != '',elem.split())))
             if elem == '' or elem == '--':
                 elem = 'No Stat'
-            
+
             final_row.append(elem)
-        
+
         # Getting the second sub-table(Career Statistics)
-        curr_table = dtls_table.css('div.b-list__info-box.b-list__info' + 
+        curr_table = details_table.css('div.b-list__info-box.b-list__info' +
                                 '-box_style_middle-width.js-guide.clearfix ' +
                                 'div.b-list__info-box-left.clearfix')
 
         curr_sub_table = curr_table.css('ul.b-list__box-list.' +
                                             'b-list__box-list_margin-top ' +
-                                            'li.b-list__box-list-item.' + 
+                                            'li.b-list__box-list-item.' +
                                             'b-list__box-list-item_type_block').getall()
 
         for elem in curr_sub_table:
@@ -116,12 +151,6 @@ class FightersSpider(scrapy.Spider):
             if elem != '' and elem != '--':
                 final_row.append(elem)
 
-        #EACH ROW CONTAINS
-        #[Fighter ID, Fighter Name, Wins, Loses, Draws, Height, Weight, Reach, Stance, DOB, SLpM,
-        # Str.Acc., SApM, Str. Def., TD Avg., TD Acc., TD Def., Sub. Avg.]
-		
-        with open('../../UFC_Fighters.tsv','a') as fight_file:
-            tsv_writer = csv.writer(fight_file, delimiter='|')
-            tsv_writer.writerow(final_row)
-        
-        return None
+        curr_item = {col: val for col, val in zip(self.attrs, final_row)}
+
+        yield curr_item
