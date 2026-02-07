@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS "DIM_Result";
+
+CREATE TABLE IF NOT EXISTS "DIM_Result" (
+    "DIM_Result_Key"      SERIAL PRIMARY KEY,
+    "DIM_Result_Name"     VARCHAR(100) NOT NULL
+);

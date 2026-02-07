@@ -1,0 +1,385 @@
+-- -- TODO: MAYBE ADD GENDER IN THIS TABLE
+-- -- todo: add ufc record which will help with incremental in this table
+-- -- TODO: WRITE IT BECAUSE NOW ITS FULL LOAD
+-- INSERT INTO "DIM_Fighter" (
+--     "DIM_Fighter_ID",
+--     "DIM_Fighter_Name",
+--     "DIM_Fighter_Age",
+--     "DIM_Fighter_Wins",
+--     "DIM_Fighter_Loses",
+--     "DIM_Fighter_Draws",
+--     "DIM_Fighter_Average_Fight_Time_Minutes",
+--     "DIM_Fighter_Height_cm",
+--     "DIM_Fighter_Weight_lbs",
+--     "DIM_Fighter_Reach_cm",
+--     "DIM_Fighter_Stance",
+--     "DIM_Fighter_Date_of_Birth",
+--     "DIM_Fighter_Total_UFC_Fights",
+--     "DIM_Fighter_Strikes_Landed_per_Minute",
+--     "DIM_Fighter_Striking_Accuracy",
+--     "DIM_Fighter_Strikes_Absorbed_per_Minute",
+--     "DIM_Fighter_Striking_Defense",
+--     "DIM_Fighter_Average_Takedowns_per_15_Mins",
+--     "DIM_Fighter_Takedown_Defense",
+--     "DIM_Fighter_Takedown_Accuracy",
+--     "DIM_Fighter_Submissions_Average_per_15_Mins",
+--     "DIM_Fighter_Effective_From",
+--     "DIM_Fighter_Effective_Until"
+-- )
+-- WITH fighter_1_fight_stats AS (
+--     SELECT
+--         "Fight_ID",
+--         "Fighter_1_ID" AS "Fighter_ID",
+--         "Fighter_1_Knock_Downs" AS "Fighter_Knock_Downs",
+--         "Fighter_1_Sign.Strikes_Done" AS "Fighter_Sign.Strikes_Done",
+--         "Fighter_1_Sign.Strikes_Attempted" AS "Fighter_Sign.Strikes_Attempted",
+--         "Fighter_1_Sign.Strikes_Perc." AS "Fighter_Sign.Strikes_Perc.",
+--         "Fighter_1_Total_Strikes_Done" AS "Fighter_Total_Strikes_Done",
+--         "Fighter_1_Total_Strikes_Attempted" AS "Fighter_Total_Strikes_Attempted",
+--         "Fighter_1_Takedowns_Done" AS "Fighter_Takedowns_Done",
+--         "Fighter_1_Takedowns_Attempted" AS "Fighter_Takedowns_Attempted",
+--         "Fighter_1_Takedowns_Perc." AS "Fighter_Takedowns_Perc.",
+--         "Fighter_1_Submission_Attempts" AS "Fighter_Submission_Attempts",
+--         "Fighter_1_Rev" AS "Fighter_Rev",
+--         "Fighter_1_Control" AS "Fighter_Control"
+--     FROM
+--         raw_fight_stats
+-- ),
+-- fighter_2_fight_stats AS (
+--     SELECT
+--         "Fight_ID",
+--         "Fighter_2_ID" AS "Fighter_ID",
+--         "Fighter_2_Knock_Downs" AS "Fighter_Knock_Downs",
+--         "Fighter_2_Sign.Strikes_Done" AS "Fighter_Sign.Strikes_Done",
+--         "Fighter_2_Sign.Strikes_Attempted" AS "Fighter_Sign.Strikes_Attempted",
+--         "Fighter_2_Sign.Strikes_Perc." AS "Fighter_Sign.Strikes_Perc.",
+--         "Fighter_2_Total_Strikes_Done" AS "Fighter_Total_Strikes_Done",
+--         "Fighter_2_Total_Strikes_Attempted" AS "Fighter_Total_Strikes_Attempted",
+--         "Fighter_2_Takedowns_Done" AS "Fighter_Takedowns_Done",
+--         "Fighter_2_Takedowns_Attempted" AS "Fighter_Takedowns_Attempted",
+--         "Fighter_2_Takedowns_Perc." AS "Fighter_Takedowns_Perc.",
+--         "Fighter_2_Submission_Attempts" AS "Fighter_Submission_Attempts",
+--         "Fighter_2_Rev" AS "Fighter_Rev",
+--         "Fighter_2_Control" AS "Fighter_Control"
+--     FROM
+--         raw_fight_stats
+-- ),
+-- fighter_fight_stats AS (
+--     SELECT *, 'red' AS "Fighter_Corner" FROM fighter_1_fight_stats
+--     UNION
+--     SELECT *, 'blue' AS "Fighter_Corner" FROM fighter_2_fight_stats
+-- ),
+-- common_fight_stats AS (
+--     SELECT
+--         "Fight_ID",
+--         "Date",
+--         "Gender",
+--         "Weight_Class",
+--         "Title_Fight",
+--         "Result",
+--         "Method",
+--         "Round",
+--         "Time",
+--         "Fight_Time_Format",
+--         "Duration_Mins"
+--     FROM raw_fight_stats
+-- ),
+-- fighters_running_sum_stats AS (
+--     SELECT
+--         fighter_fight_stats."Fight_ID",
+--         fighter_fight_stats."Fighter_ID",
+--         fighter_fight_stats."Fighter_Corner",
+--         COUNT(1) OVER (
+--             PARTITION BY fighter_fight_stats."Fighter_ID"
+--             ORDER BY common_fight_stats."Date" ASC
+--             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+--         ) AS "Total_UFC_Fights",
+--         SUM(common_fight_stats."Duration_Mins") OVER (
+--             PARTITION BY fighter_fight_stats."Fighter_ID"
+--             ORDER BY common_fight_stats."Date" ASC
+--             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+--         ) AS "Total_Fighting_Minutes",
+--         SUM(fighter_fight_stats."Fighter_Sign.Strikes_Done") OVER (
+--             PARTITION BY fighter_fight_stats."Fighter_ID"
+--             ORDER BY common_fight_stats."Date" ASC
+--             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+--         ) AS "Total_Sign.Strikes_Done",
+--         SUM(fighter_fight_stats."Fighter_Sign.Strikes_Attempted") OVER (
+--             PARTITION BY fighter_fight_stats."Fighter_ID"
+--             ORDER BY common_fight_stats."Date" ASC
+--             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+--         ) AS "Total_Sign.Strikes_Attempted",
+--         SUM(opponent_fight_stats."Fighter_Sign.Strikes_Done") OVER (
+--             PARTITION BY fighter_fight_stats."Fighter_ID"
+--             ORDER BY common_fight_stats."Date" ASC
+--             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+--         ) AS "Total_Sign.Strikes_Absorbed",
+--         SUM(opponent_fight_stats."Fighter_Sign.Strikes_Attempted") OVER (
+--             PARTITION BY fighter_fight_stats."Fighter_ID"
+--             ORDER BY common_fight_stats."Date" ASC
+--             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+--         ) AS "Total_Sign.Strikes_Opponent_Attempted",
+--         SUM(fighter_fight_stats."Fighter_Takedowns_Done") OVER (
+--             PARTITION BY fighter_fight_stats."Fighter_ID"
+--             ORDER BY common_fight_stats."Date" ASC
+--             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+--         ) AS "Total_Takedowns_Done",
+--         SUM(fighter_fight_stats."Fighter_Takedowns_Attempted") OVER (
+--             PARTITION BY fighter_fight_stats."Fighter_ID"
+--             ORDER BY common_fight_stats."Date" ASC
+--             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+--         ) AS "Total_Takedowns_Attempted",
+--         SUM(opponent_fight_stats."Fighter_Takedowns_Done") OVER (
+--             PARTITION BY fighter_fight_stats."Fighter_ID"
+--             ORDER BY common_fight_stats."Date" ASC
+--             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+--         ) AS "Total_Takedowns_Absorbed",
+--         SUM(opponent_fight_stats."Fighter_Takedowns_Attempted") OVER (
+--             PARTITION BY fighter_fight_stats."Fighter_ID"
+--             ORDER BY common_fight_stats."Date" ASC
+--             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+--         ) AS "Total_Takedowns_Opponent_Attempted",
+--         SUM(fighter_fight_stats."Fighter_Submission_Attempts") OVER (
+--             PARTITION BY fighter_fight_stats."Fighter_ID"
+--             ORDER BY common_fight_stats."Date" ASC
+--             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
+--         ) AS "Total_Submissions_Attempts"
+--     FROM
+--         fighter_fight_stats
+--         INNER JOIN fighter_fight_stats AS opponent_fight_stats ON
+--             fighter_fight_stats."Fight_ID" = opponent_fight_stats."Fight_ID" AND
+--             fighter_fight_stats."Fighter_ID" != opponent_fight_stats."Fighter_ID"
+--         INNER JOIN common_fight_stats ON
+--             fighter_fight_stats."Fight_ID" = common_fight_stats."Fight_ID"
+-- ),
+-- fighters_stats_before_fights AS (
+--     SELECT
+--         common_fight_stats."Date" AS "Fight_Date",
+--         raw_fighters_current_stats."ID" AS "DIM_Fighter_ID",
+--         raw_fighters_current_stats."Name" AS "DIM_Fighter_Name",
+--         DATE_PART(
+--             'year',
+--             AGE(common_fight_stats."Date", raw_fighters_current_stats."Date_of_Birth")
+--         ) AS "DIM_Fighter_Age",
+--         raw_fighters_current_stats."Wins" -
+--         SUM(
+--             CASE WHEN
+--                 (common_fight_stats."Result" = 'win' AND fighters_running_sum_stats."Fighter_Corner" = 'red') OR
+--                 (common_fight_stats."Result" = 'lose' AND fighters_running_sum_stats."Fighter_Corner" = 'blue')
+--             THEN 1 ELSE 0 END
+--         )
+--         OVER (
+--             PARTITION BY fighters_running_sum_stats."Fighter_ID"
+--             ORDER BY common_fight_stats."Date" DESC
+--         ) AS "DIM_Fighter_Wins",
+--         raw_fighters_current_stats."Loses" -
+--         SUM(
+--             CASE WHEN
+--                 (common_fight_stats."Result" = 'lose' AND fighters_running_sum_stats."Fighter_Corner" = 'red') OR
+--                 (common_fight_stats."Result" = 'win' AND fighters_running_sum_stats."Fighter_Corner" = 'blue')
+--             THEN 1 ELSE 0 END
+--         )
+--         OVER (
+--             PARTITION BY fighters_running_sum_stats."Fighter_ID"
+--             ORDER BY common_fight_stats."Date" DESC
+--         ) AS "DIM_Fighter_Loses",
+--         raw_fighters_current_stats."Draws" -
+--         SUM(
+--             CASE WHEN
+--                 common_fight_stats."Result" = 'draw'
+--             THEN 1 ELSE 0 END
+--         )
+--         OVER (
+--             PARTITION BY fighters_running_sum_stats."Fighter_ID"
+--             ORDER BY common_fight_stats."Date" DESC
+--         ) AS "DIM_Fighter_Draws",
+--         COALESCE(
+--             fighters_running_sum_stats."Total_Fighting_Minutes",
+--             0.0
+--         ) / COALESCE(
+--                 NULLIF(
+--                     fighters_running_sum_stats."Total_Logged_Fights", 0
+--                 ),
+--                 1.0
+--         ) AS "DIM_Fighter_Average_Fight_Time_Minutes",
+--         raw_fighters_current_stats."Height_cm" AS "DIM_Fighter_Height_cm",
+--         raw_fighters_current_stats."Weight_lbs" AS "DIM_Fighter_Weight_lbs",
+--         raw_fighters_current_stats."Reach_cm" AS "DIM_Fighter_Reach_cm",
+--         raw_fighters_current_stats."Stance" AS "DIM_Fighter_Stance",
+--         raw_fighters_current_stats."Date_of_Birth" AS "DIM_Fighter_Date_of_Birth",
+--         fighters_running_sum_stats."Total_UFC_Fights" AS "DIM_Fighter_Total_UFC_Fights",
+--         COALESCE(
+--             fighters_running_sum_stats."Total_Sign.Strikes_Done",
+--             0.0
+--         ) / COALESCE(
+--                 NULLIF(
+--                     fighters_running_sum_stats."Total_Fighting_Minutes",
+--                     0
+--                 ),
+--                 1.0
+--         ) AS "DIM_Fighter_Strikes_Landed_per_Minute",
+--         (
+--             COALESCE(
+--                 fighters_running_sum_stats."Total_Sign.Strikes_Done",
+--                 0.0
+--             ) /
+--             COALESCE(
+--                 NULLIF(
+--                     fighters_running_sum_stats."Total_Sign.Strikes_Attempted",
+--                     0
+--                 ),
+--                 1.0
+--             )
+--         ) * 100.0 AS "DIM_Fighter_Striking_Accuracy",
+--         COALESCE(
+--             fighters_running_sum_stats."Total_Sign.Strikes_Absorbed",
+--             0.0
+--         ) / COALESCE(
+--                 NULLIF(
+--                     fighters_running_sum_stats."Total_Fighting_Minutes", 0
+--                 ),
+--                 1.0
+--         ) AS "DIM_Fighter_Strikes_Absorbed_per_Minute",
+--         CASE
+--             WHEN
+--                 fighters_running_sum_stats."Total_Sign.Strikes_Absorbed" = 0 AND
+--                 fighters_running_sum_stats."Total_Sign.Strikes_Opponent_Attempted" = 0
+--             THEN 0.0
+--             ELSE
+--                 (1.0 - (
+--                     COALESCE(
+--                         fighters_running_sum_stats."Total_Sign.Strikes_Absorbed",
+--                         1.0
+--                     ) /
+--                     COALESCE(
+--                         NULLIF(
+--                             fighters_running_sum_stats."Total_Sign.Strikes_Opponent_Attempted", 0
+--                         ),
+--                         1.0
+--                     )
+--                 )) * 100.0
+--         END AS "DIM_Fighter_Striking_Defense",
+--         COALESCE(
+--             fighters_running_sum_stats."Total_Takedowns_Done",
+--             0.0
+--         ) / (COALESCE(
+--                 NULLIF(
+--                     fighters_running_sum_stats."Total_Fighting_Minutes", 0
+--                 ),
+--                 1.0
+--         ) / 15.0) AS "DIM_Fighter_Average_Takedowns_per_15_Mins",
+--         CASE
+--             WHEN
+--                 fighters_running_sum_stats."Total_Takedowns_Absorbed" = 0 AND
+--                 fighters_running_sum_stats."Total_Takedowns_Opponent_Attempted" = 0
+--             THEN 0.0
+--             ELSE
+--                 (1.0 - (
+--                     COALESCE(
+--                         fighters_running_sum_stats."Total_Takedowns_Absorbed",
+--                         1.0
+--                     ) / COALESCE(
+--                         NULLIF(
+--                             fighters_running_sum_stats."Total_Takedowns_Opponent_Attempted", 0
+--                         ),
+--                         1.0
+--                     )
+--                 )) * 100.0
+--         END AS "DIM_Fighter_Takedown_Defense",
+--         (
+--             COALESCE(
+--                 fighters_running_sum_stats."Total_Takedowns_Done",
+--                 0.0
+--             ) / COALESCE(
+--                 NULLIF(
+--                     fighters_running_sum_stats."Total_Takedowns_Attempted", 0
+--                 ),
+--                 1.0
+--             )
+--         ) * 100.0 AS "DIM_Fighter_Takedown_Accuracy",
+--         COALESCE(
+--                 fighters_running_sum_stats."Total_Submissions_Attempts",
+--                 0.0
+--         ) / (COALESCE(
+--                 NULLIF(
+--                     fighters_running_sum_stats."Total_Fighting_Minutes", 0
+--                 ),
+--                 1.0
+--         ) / 15.0) AS "DIM_Fighter_Submissions_Average_per_15_Mins"
+--     FROM
+--         fighters_running_sum_stats
+--         INNER JOIN common_fight_stats ON
+--             fighters_running_sum_stats."Fight_ID" = common_fight_stats."Fight_ID"
+--         INNER JOIN raw_fighters_current_stats ON
+--             fighters_running_sum_stats."Fighter_ID" = raw_fighters_current_stats."ID"
+-- ),
+-- fighters_current_stats AS (
+--     SELECT
+--         '9999-01-02'::DATE AS "Fight_Date",
+--         raw_fighters_current_stats."ID" AS "DIM_Fighter_ID",
+--         raw_fighters_current_stats."Name" AS "DIM_Fighter_Name",
+--         DATE_PART(
+--             'year',
+--             AGE(CURRENT_DATE, raw_fighters_current_stats."Date_of_Birth")
+--         ) AS "DIM_Fighter_Age",
+--         raw_fighters_current_stats."Wins" AS "DIM_Fighter_Wins",
+--         raw_fighters_current_stats."Loses" AS "DIM_Fighter_Loses",
+--         raw_fighters_current_stats."Draws" AS "DIM_Fighter_Draws",
+--         raw_fighters_current_stats."Average_Fight_Time_Minutes" AS "DIM_Fighter_Average_Fight_Time_Minutes",
+--         raw_fighters_current_stats."Height_cm" AS "DIM_Fighter_Height_cm",
+--         raw_fighters_current_stats."Weight_lbs" AS "DIM_Fighter_Weight_lbs",
+--         raw_fighters_current_stats."Reach_cm" AS "DIM_Fighter_Reach_cm",
+--         raw_fighters_current_stats."Stance" AS "DIM_Fighter_Stance",
+--         raw_fighters_current_stats."Date_of_Birth" AS "DIM_Fighter_Date_of_Birth",
+--         raw_fighters_current_stats."Total_Logged_Fights" AS "DIM_Fighter_Total_UFC_Fights",
+--         raw_fighters_current_stats."Strikes_Landed_per_Minute" AS "DIM_Fighter_Strikes_Landed_per_Minute",
+--         raw_fighters_current_stats."Striking_Accuracy" AS "DIM_Fighter_Striking_Accuracy",
+--         raw_fighters_current_stats."Strikes_Absorbed_per_Minute" AS "DIM_Fighter_Strikes_Absorbed_per_Minute",
+--         raw_fighters_current_stats."Striking_Defense" AS "DIM_Fighter_Striking_Defense",
+--         raw_fighters_current_stats."Average_Takedowns" AS "DIM_Fighter_Average_Takedowns_per_15_Mins",
+--         raw_fighters_current_stats."Takedown_Defense" AS "DIM_Fighter_Takedown_Defense",
+--         raw_fighters_current_stats."Takedown_Accuracy" AS "DIM_Fighter_Takedown_Accuracy",
+--         raw_fighters_current_stats."Submissions_Average" AS "DIM_Fighter_Submissions_Average_per_15_Mins"
+--     FROM
+--         raw_fighters_current_stats
+-- ),
+-- fighters_stats_evolution AS (
+--     SELECT * FROM fighters_stats_before_fights
+--     UNION
+--     SELECT * FROM fighters_current_stats
+-- )
+
+-- SELECT
+--     "DIM_Fighter_ID",
+--     "DIM_Fighter_Name",
+--     "DIM_Fighter_Age",
+--     "DIM_Fighter_Wins",
+--     "DIM_Fighter_Loses",
+--     "DIM_Fighter_Draws",
+--     "DIM_Fighter_Average_Fight_Time_Minutes",
+--     "DIM_Fighter_Height_cm",
+--     "DIM_Fighter_Weight_lbs",
+--     "DIM_Fighter_Reach_cm",
+--     "DIM_Fighter_Stance",
+--     "DIM_Fighter_Date_of_Birth",
+--     "DIM_Fighter_Total_UFC_Fights",
+--     "DIM_Fighter_Strikes_Landed_per_Minute",
+--     "DIM_Fighter_Striking_Accuracy",
+--     "DIM_Fighter_Strikes_Absorbed_per_Minute",
+--     "DIM_Fighter_Striking_Defense",
+--     "DIM_Fighter_Average_Takedowns_per_15_Mins",
+--     "DIM_Fighter_Takedown_Defense",
+--     "DIM_Fighter_Takedown_Accuracy",
+--     "DIM_Fighter_Submissions_Average_per_15_Mins",
+--     COALESCE(
+--         LAG(fighters_stats_evolution."Fight_Date") OVER (
+--             PARTITION BY fighters_stats_evolution."DIM_Fighter_ID"
+--             ORDER BY fighters_stats_evolution."Fight_Date" ASC
+--         ),
+--         '1900-01-01'
+--     ) AS "DIM_Fighter_Effective_From",
+--     (
+--         fighters_stats_evolution."Fight_Date" - INTERVAL '1 DAY'
+--     ) AS "DIM_Fighter_Effective_Until"
+-- FROM
+--     fighters_stats_evolution;

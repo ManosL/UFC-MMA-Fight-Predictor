@@ -1,0 +1,93 @@
+INSERT INTO "FACT_Fight" (
+    "FACT_Fight_Date_Key",
+    "FACT_Fight_Gender_Key",
+    "FACT_Fight_Weight_Class_Key",
+    "FACT_Fight_Title_Fight",
+    "FACT_Fight_Result_Key",
+    "FACT_Fight_Method_Key",
+    "FACT_Fight_Round",
+    "FACT_Fight_Time",
+    "FACT_Fight_Fight_Time_Format_Key",
+    "FACT_Fight_Duration_Mins",
+    "FACT_Fight_Fighter_1_Key",
+    "FACT_Fight_Fighter_1_Knock_Downs",
+    "FACT_Fight_Fighter_1_Sign.Strikes_Done",
+    "FACT_Fight_Fighter_1_Sign.Strikes_Attempted",
+    "FACT_Fight_Fighter_1_Sign.Strikes_Perc.",
+    "FACT_Fight_Fighter_1_Total_Strikes_Done",
+    "FACT_Fight_Fighter_1_Total_Strikes_Attempted",
+    "FACT_Fight_Fighter_1_Takedowns_Done",
+    "FACT_Fight_Fighter_1_Takedowns_Attempted",
+    "FACT_Fight_Fighter_1_Takedowns_Perc.",
+    "FACT_Fight_Fighter_1_Submission_Attempts",
+    "FACT_Fight_Fighter_1_Rev",
+    "FACT_Fight_Fighter_1_Control",
+    "FACT_Fight_Fighter_2_Key",
+    "FACT_Fight_Fighter_2_Knock_Downs",
+    "FACT_Fight_Fighter_2_Sign.Strikes_Done",
+    "FACT_Fight_Fighter_2_Sign.Strikes_Attempted",
+    "FACT_Fight_Fighter_2_Sign.Strikes_Perc.",
+    "FACT_Fight_Fighter_2_Total_Strikes_Done",
+    "FACT_Fight_Fighter_2_Total_Strikes_Attempted",
+    "FACT_Fight_Fighter_2_Takedowns_Done",
+    "FACT_Fight_Fighter_2_Takedowns_Attempted",
+    "FACT_Fight_Fighter_2_Takedowns_Perc.",
+    "FACT_Fight_Fighter_2_Submission_Attempts",
+    "FACT_Fight_Fighter_2_Rev",
+    "FACT_Fight_Fighter_2_Control"
+)
+SELECT
+    TO_CHAR(raw_fight_stats."Date", 'YYYYMMDD') AS "FACT_Fight_Date_Key",
+    dim_gender."DIM_Gender_Key" AS "FACT_Fight_Gender_Key",
+    dim_weight_class."DIM_Weight_Class_Key" AS "FACT_Fight_Weight_Class_Key",
+    raw_fight_stats."Title_Fight" AS "FACT_Fight_Title_Fight",
+    dim_result."DIM_Result_Key" AS "FACT_Fight_Result_Key",
+    dim_method."DIM_Method_Key" AS "FACT_Fight_Method_Key",
+    raw_fight_stats."Round" AS "FACT_Fight_Round",
+    raw_fight_stats."Time" AS "FACT_Fight_Time",
+    dim_fight_time_format."DIM_Fight_Time_Format_Key" AS "FACT_Fight_Fight_Time_Format_Key",
+    raw_fight_stats."Duration_Mins" AS "FACT_Fight_Duration_Mins",
+    dim_fighter_1."DIM_Fighter_Key" AS "FACT_Fight_Fighter_1_Key",
+    raw_fight_stats."Fighter_1_Knock_Downs" AS "FACT_Fight_Fighter_1_Knock_Downs",
+    raw_fight_stats."Fighter_1_Sign.Strikes_Done" AS "FACT_Fight_Fighter_1_Sign.Strikes_Done",
+    raw_fight_stats."Fighter_1_Sign.Strikes_Attempted" AS "FACT_Fight_Fighter_1_Sign.Strikes_Attempted",
+    raw_fight_stats."Fighter_1_Sign.Strikes_Perc." AS "FACT_Fight_Fighter_1_Sign.Strikes_Perc.",
+    raw_fight_stats."Fighter_1_Total_Strikes_Done" AS "FACT_Fight_Fighter_1_Total_Strikes_Done",
+    raw_fight_stats."Fighter_1_Total_Strikes_Attempted" AS "FACT_Fight_Fighter_1_Total_Strikes_Attempted",
+    raw_fight_stats."Fighter_1_Takedowns_Done" AS "FACT_Fight_Fighter_1_Takedowns_Done",
+    raw_fight_stats."Fighter_1_Takedowns_Attempted" AS "FACT_Fight_Fighter_1_Takedowns_Attempted",
+    raw_fight_stats."Fighter_1_Takedowns_Perc." AS "FACT_Fight_Fighter_1_Takedowns_Perc.",
+    raw_fight_stats."Fighter_1_Submission_Attempts" AS "FACT_Fight_Fighter_1_Submission_Attempts",
+    raw_fight_stats."Fighter_1_Rev" AS "FACT_Fight_Fighter_1_Rev",
+    raw_fight_stats."Fighter_1_Control" AS "FACT_Fight_Fighter_1_Control",
+    dim_fighter_2."DIM_Fighter_Key" AS "FACT_Fight_Fighter_2_Key",
+    raw_fight_stats."Fighter_2_Knock_Downs" AS "FACT_Fight_Fighter_2_Knock_Downs",
+    raw_fight_stats."Fighter_2_Sign.Strikes_Done" AS "FACT_Fight_Fighter_2_Sign.Strikes_Done",
+    raw_fight_stats."Fighter_2_Sign.Strikes_Attempted" AS "FACT_Fight_Fighter_2_Sign.Strikes_Attempted",
+    raw_fight_stats."Fighter_2_Sign.Strikes_Perc." AS "FACT_Fight_Fighter_2_Sign.Strikes_Perc.",
+    raw_fight_stats."Fighter_2_Total_Strikes_Done" AS "FACT_Fight_Fighter_2_Total_Strikes_Done",
+    raw_fight_stats."Fighter_2_Total_Strikes_Attempted" AS "FACT_Fight_Fighter_2_Total_Strikes_Attempted",
+    raw_fight_stats."Fighter_2_Takedowns_Done" AS "FACT_Fight_Fighter_2_Takedowns_Done",
+    raw_fight_stats."Fighter_2_Takedowns_Attempted" AS "FACT_Fight_Fighter_2_Takedowns_Attempted",
+    raw_fight_stats."Fighter_2_Takedowns_Perc." AS "FACT_Fight_Fighter_2_Takedowns_Perc.",
+    raw_fight_stats."Fighter_2_Submission_Attempts" AS "FACT_Fight_Fighter_2_Submission_Attempts",
+    raw_fight_stats."Fighter_2_Rev" AS "FACT_Fight_Fighter_2_Rev",
+    raw_fight_stats."Fighter_2_Control" AS "FACT_Fight_Fighter_2_Control"
+FROM
+    raw_fight_stats
+    INNER JOIN "DIM_Gender" dim_gender
+        ON raw_fight_stats."Gender" = dim_gender."DIM_Gender_Name"
+    INNER JOIN "DIM_Weight_Class" dim_weight_class
+        ON raw_fight_stats."Weight_Class" = dim_weight_class."DIM_Weight_Class_Name"
+    INNER JOIN "DIM_Result" dim_result
+        ON raw_fight_stats."Result" = dim_result."DIM_Result_Name"
+    INNER JOIN "DIM_Method" dim_method
+        ON raw_fight_stats."Method" = dim_method."DIM_Method_Name"
+    INNER JOIN "DIM_Fight_Time_Format" dim_fight_time_format
+        ON raw_fight_stats."Fight_Time_Format" = dim_fight_time_format."DIM_Fight_Time_Format_Name"
+    INNER JOIN "DIM_Fighter" dim_fighter_1
+        ON raw_fight_stats."Fighter_1_ID" = dim_fighter_1."DIM_Fighter_ID" AND
+        dim_fighter_1."DIM_Fighter_Effective_Until" = raw_fight_stats."Date" - INTERVAL '1 DAY'
+    INNER JOIN "DIM_Fighter" dim_fighter_2
+        ON raw_fight_stats."Fighter_2_ID" = dim_fighter_2."DIM_Fighter_ID" AND
+        dim_fighter_2."DIM_Fighter_Effective_Until" = raw_fight_stats."Date" - INTERVAL '1 DAY'

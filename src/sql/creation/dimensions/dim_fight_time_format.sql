@@ -1,0 +1,6 @@
+DROP TABLE IF EXISTS "DIM_Fight_Time_Format";
+
+CREATE TABLE IF NOT EXISTS "DIM_Fight_Time_Format" (
+    "DIM_Fight_Time_Format_Key"      SERIAL PRIMARY KEY,
+    "DIM_Fight_Time_Format_Name"     VARCHAR(100) NOT NULL
+);
