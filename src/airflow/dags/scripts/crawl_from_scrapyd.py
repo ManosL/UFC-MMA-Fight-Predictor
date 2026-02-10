@@ -1,6 +1,8 @@
 import os
 import requests
 from time import sleep
+from datetime import datetime, timezone
+import secrets
 
 
 def schedule_spider(
@@ -12,13 +14,18 @@ def schedule_spider(
         is_incremental="False",
         lookup_days=10
 ):
+    now = datetime.now(timezone.utc)
+    timestamp = now.strftime("%Y-%m-%dT%H_%M_%S_%f")
+    job_id = f"{timestamp}_{secrets.token_hex(3)}"
+
     response = requests.post(
                     f'{base_url}/schedule.json',
                     data={
                         'project': project_name,
                         'spider': spider_name,
                         'is_incremental': is_incremental,
-                        'lookup_days': lookup_days
+                        'lookup_days': lookup_days,
+                        'jobid': job_id
                     },
                     auth=(scrapyd_username, scrapyd_password,),
                 )
@@ -79,6 +86,6 @@ def crawl_from_scrapyd(
         sleep(poll_frequency)
 
     print('Crawling finished successfully')
-    return 0
+    return job_id
 
 # crawl_from_scrapyd('http://scrapy-server:6800', 'UFCStats_Crawlers', 'event_spider')

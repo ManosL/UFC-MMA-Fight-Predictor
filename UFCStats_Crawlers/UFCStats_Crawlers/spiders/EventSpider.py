@@ -1,7 +1,15 @@
+import sys
+from copy import deepcopy
 from datetime import datetime
 import scrapy
 import re
-import csv
+import os
+
+sys.path.append("/app/scrapyd/project/UFCStats_Crawlers/UFCStats_Crawlers/spiders")
+
+from utils import log_path_to_scrapyd_url, get_minio_client
+from utils import create_minio_bucket, write_json_to_minio
+
 
 # these weight classes are taken from https://en.wikipedia.org/wiki/Mixed_martial_arts_weight_classes
 mma_weight_classes = ['atomweight', 'strawweight', 'flyweight', 'bantamweight', 'featherweight', 'lightweight',
@@ -168,6 +176,8 @@ class EventSpider(scrapy.Spider):
 			else:
 				break
 
+		self.crawler.stats.inc_value("events_expected", len(event_links))
+
 		for link, date in zip(event_links, event_dates, strict=True):
 			yield scrapy.Request(url=link, callback=self.event_parse, meta={'event_date': date})
 
@@ -187,6 +197,9 @@ class EventSpider(scrapy.Spider):
 		rows = response.css(event_matches_selector)
 		rows = rows.css('tr::attr(data-link)').getall()
 
+		self.crawler.stats.inc_value("events_parsed", 1)
+		self.crawler.stats.inc_value("fights_expected", len(rows))
+
 		for link in rows:
 			yield scrapy.Request(url = link, callback=self.fight_parse,
 								meta={'event_date': response.meta.get('event_date')})
@@ -201,9 +214,8 @@ class EventSpider(scrapy.Spider):
 		event_name = response.css(event_name_selector).get()
 
 		if event_name is None:
-			with open('mylog.txt','a') as log:
-				log.write('Error at ' + response.url + '\n')
-				return None
+			self.logger.warning(f"Error at {response.url}")
+			return None
 
 		event_name = self.process_event_name(event_name)
 
@@ -296,4 +308,31 @@ class EventSpider(scrapy.Spider):
 
 		curr_item = {col: val for col, val in zip(self.event_columns, final_attrs)}
 
+		self.crawler.stats.inc_value("fights_parsed", 1)
 		yield curr_item
+
+
+	def closed(self, reason):
+		minio_client = get_minio_client()
+		log_file_url = log_path_to_scrapyd_url(self.settings["LOG_FILE"])
+
+		self.crawler.stats.set_value("spider_name", self.name)
+		self.crawler.stats.set_value("log_file_url", log_file_url)
+
+		stats_file_name = os.path.basename(self.settings["LOG_FILE"])
+
+		bucket_name = os.environ.get('MINIO_EVENT_CRAWL_LOGS_BUCKET_NAME')
+
+		self.logger.info(create_minio_bucket(minio_client, bucket_name))
+
+		crawl_stats = deepcopy(self.crawler.stats.get_stats())
+		crawl_stats["start_time"] = str(crawl_stats["start_time"])
+
+		write_json_to_minio(
+			minio_client,
+			bucket_name,
+			stats_file_name,
+			crawl_stats
+		)
+
+		return

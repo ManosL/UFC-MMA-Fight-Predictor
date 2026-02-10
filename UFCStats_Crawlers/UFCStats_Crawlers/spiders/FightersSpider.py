@@ -1,4 +1,6 @@
 # TODO: EXPLOIT UTILS FOR THE MINIO STUFF THIS APPLIES EVERYWHERE
+import sys
+from copy import deepcopy
 import os
 import pandas as pd
 import string
@@ -7,7 +9,11 @@ import re
 from minio import Minio
 from io import BytesIO
 
-event_dates = {}
+sys.path.append("/app/scrapyd/project/UFCStats_Crawlers/UFCStats_Crawlers/spiders")
+
+from utils import log_path_to_scrapyd_url, get_minio_client
+from utils import create_minio_bucket, write_json_to_minio
+
 
 class FightersSpider(scrapy.Spider):
     name = 'fighters_spider'
@@ -57,6 +63,7 @@ class FightersSpider(scrapy.Spider):
             all_fighter_ids = set(event_data['Fighter 1 ID']).union(set(event_data['Fighter 2 ID']))
             self.logger.debug(f"Will crawl info for the following Fighter IDs: {all_fighter_ids}")
 
+            self.crawler.stats.inc_value("fighters_expected", len(all_fighter_ids))
             for fighter_id in all_fighter_ids:
                 next_url = f"http://ufcstats.com/fighter-details/{fighter_id}"
 
@@ -79,6 +86,7 @@ class FightersSpider(scrapy.Spider):
             links.append(col.css('a::attr(href)').get())
 
         print(len(links),response.url)
+        self.crawler.stats.inc_value("fighters_expected", len(links))
         for link in links:
             yield scrapy.Request(url = link,callback = self.fighter_parse)
 
@@ -153,4 +161,31 @@ class FightersSpider(scrapy.Spider):
 
         curr_item = {col: val for col, val in zip(self.attrs, final_row)}
 
+        self.crawler.stats.inc_value("fighters_parsed", 1)
         yield curr_item
+
+
+    def closed(self, reason):
+        minio_client = get_minio_client()
+        log_file_url = log_path_to_scrapyd_url(self.settings["LOG_FILE"])
+
+        self.crawler.stats.set_value("spider_name", self.name)
+        self.crawler.stats.set_value("log_file_url", log_file_url)
+
+        stats_file_name = os.path.basename(self.settings["LOG_FILE"])
+
+        bucket_name = os.environ.get('MINIO_FIGHTER_CRAWL_LOGS_BUCKET_NAME')
+
+        self.logger.info(create_minio_bucket(minio_client, bucket_name))
+
+        crawl_stats = deepcopy(self.crawler.stats.get_stats())
+        crawl_stats["start_time"] = str(crawl_stats["start_time"])
+
+        write_json_to_minio(
+            minio_client,
+            bucket_name,
+            stats_file_name,
+            crawl_stats
+        )
+
+        return

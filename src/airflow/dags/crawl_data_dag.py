@@ -113,8 +113,6 @@ def get_incremental_load_task_flow():
     return start_task
 
 
-# TODO: HAVE ADDITIONAL TASKS THAT CHECK THE LOGS IN ORDER TO FIND ANY ERRORS
-# THROUGH CRAWLING
 with DAG(
     dag_id="crawl_ufcstats_site",
     params={
