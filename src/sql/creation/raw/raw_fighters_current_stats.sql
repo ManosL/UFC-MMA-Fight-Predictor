@@ -22,6 +22,7 @@ CREATE TABLE raw_fighters_current_stats(
     "Takedown_Accuracy"             FLOAT NOT NULL,
     "Takedown_Defense"              FLOAT NOT NULL,
     "Submissions_Average"           FLOAT NOT NULL,
+    "__elt_loaded_at"               TIMESTAMP WITH TIME ZONE DEFAULT (TIMEZONE('utc', NOW())),
 
     PRIMARY KEY("ID")
 );

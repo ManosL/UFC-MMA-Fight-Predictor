@@ -34,6 +34,7 @@ CREATE TABLE raw_fighters_stats_before_fight(
     "Fighter_2_Takedown_Accuracy"               FLOAT,
     "Fighter_2_Takedown_Defense"                FLOAT,
     "Fighter_2_Submission_Average_per_15M"      FLOAT,
+    "__elt_loaded_at"                           TIMESTAMP WITH TIME ZONE DEFAULT (TIMEZONE('utc', NOW())),
 
     PRIMARY KEY("Fight_ID")
 );

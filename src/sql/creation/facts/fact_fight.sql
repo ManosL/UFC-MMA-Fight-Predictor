@@ -37,5 +37,6 @@ CREATE TABLE IF NOT EXISTS "FACT_Fight" (
     "FACT_Fight_Fighter_2_Takedowns_Perc."             VARCHAR(100),
     "FACT_Fight_Fighter_2_Submission_Attempts"         INTEGER,
     "FACT_Fight_Fighter_2_Rev"                         INTEGER,
-    "FACT_Fight_Fighter_2_Control"                     VARCHAR(100)
+    "FACT_Fight_Fighter_2_Control"                     VARCHAR(100),
+    "__elt_loaded_at"                                  TIMESTAMP WITH TIME ZONE DEFAULT (TIMEZONE('utc', NOW()))
 );

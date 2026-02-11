@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS "DIM_Fighter" (
     "DIM_Fighter_Submissions_Average_per_15_Mins"   FLOAT NOT NULL,
     "DIM_Fighter_Effective_From"                    DATE,
     "DIM_Fighter_Effective_Until"                   DATE,
+    "__elt_loaded_at"                               TIMESTAMP WITH TIME ZONE DEFAULT (TIMEZONE('utc', NOW())),
 
     PRIMARY KEY("DIM_Fighter_ID", "DIM_Fighter_Effective_From",
                 "DIM_Fighter_Effective_Until")

@@ -2,5 +2,6 @@ DROP TABLE IF EXISTS "DIM_Result";
 
 CREATE TABLE IF NOT EXISTS "DIM_Result" (
     "DIM_Result_Key"      SERIAL PRIMARY KEY,
-    "DIM_Result_Name"     VARCHAR(100) NOT NULL
+    "DIM_Result_Name"     VARCHAR(100) NOT NULL,
+    "__elt_loaded_at"     TIMESTAMP WITH TIME ZONE DEFAULT (TIMEZONE('utc', NOW()))
 );

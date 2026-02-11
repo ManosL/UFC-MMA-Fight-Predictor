@@ -42,6 +42,7 @@ CREATE TABLE raw_fight_stats(
     "Fighter_2_Rev"                         INTEGER,
     "Fighter_2_Control"                     VARCHAR(100),
     "Duration_Mins"                         FLOAT,
+    "__elt_loaded_at"                       TIMESTAMP WITH TIME ZONE DEFAULT (TIMEZONE('utc', NOW())),
 
     PRIMARY KEY("Fight_ID")
 )

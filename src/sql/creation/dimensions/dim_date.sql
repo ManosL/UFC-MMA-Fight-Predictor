@@ -19,5 +19,6 @@ CREATE TABLE IF NOT EXISTS "DIM_Date" (
     "DIM_Date_Is_Quarter_End"       BOOLEAN NOT NULL,
     "DIM_Date_Is_Year_Start"        BOOLEAN NOT NULL,
     "DIM_Date_Is_Year_End"          BOOLEAN NOT NULL,
-    "DIM_Date_Is_Leap_Year"         BOOLEAN NOT NULL
+    "DIM_Date_Is_Leap_Year"         BOOLEAN NOT NULL,
+    "__elt_loaded_at"               TIMESTAMP WITH TIME ZONE DEFAULT (TIMEZONE('utc', NOW()))
 );
