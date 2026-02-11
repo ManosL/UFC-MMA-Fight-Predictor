@@ -10,7 +10,7 @@ from airflow.operators.python import BranchPythonOperator
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.operators.empty import EmptyOperator
 
-from dag_parts.crawing_task_flow import get_crawling_task_flow, check_if_incremental_or_full_load_run
+from dag_parts.crawling_task_flow import get_crawling_task_flow, check_if_incremental_or_full_load_run
 from dag_parts.processing_task_flow import get_processing_task_flow
 from dag_parts.dwh_full_loading_task_flow import get_full_warehouse_loading_task_flow
 from dag_parts.dwh_incremental_loading_task_flow import get_incr_warehouse_loading_task_flow

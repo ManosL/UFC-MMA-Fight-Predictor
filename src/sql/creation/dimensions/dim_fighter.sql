@@ -4,7 +4,6 @@ CREATE TABLE IF NOT EXISTS "DIM_Fighter" (
     "DIM_Fighter_Key"                               SERIAL,
     "DIM_Fighter_ID"                                VARCHAR(50) NOT NULL,
     "DIM_Fighter_Name"                              VARCHAR(50) NOT NULL,
-    "DIM_Fighter_Age"                               INTEGER,
     "DIM_Fighter_Wins"                              INTEGER NOT NULL,
     "DIM_Fighter_Loses"                             INTEGER NOT NULL,
     "DIM_Fighter_Draws"                             INTEGER NOT NULL,

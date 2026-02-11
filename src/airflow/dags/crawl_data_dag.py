@@ -2,7 +2,7 @@ from datetime import datetime
 from airflow import DAG
 from airflow.sdk import Param
 
-from dag_parts.crawing_task_flow import get_crawling_task_flow
+from dag_parts.crawling_task_flow import get_crawling_task_flow
 
 with DAG(
     dag_id="crawl_ufcstats_site",

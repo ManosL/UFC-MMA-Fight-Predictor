@@ -3,7 +3,6 @@
 INSERT INTO "DIM_Fighter" (
     "DIM_Fighter_ID",
     "DIM_Fighter_Name",
-    "DIM_Fighter_Age",
     "DIM_Fighter_Wins",
     "DIM_Fighter_Loses",
     "DIM_Fighter_Draws",
@@ -157,10 +156,6 @@ fighters_stats_before_fights AS (
         common_fight_stats."Date" AS "Fight_Date",
         raw_fighters_current_stats."ID" AS "DIM_Fighter_ID",
         raw_fighters_current_stats."Name" AS "DIM_Fighter_Name",
-        DATE_PART(
-            'year',
-            AGE(common_fight_stats."Date", raw_fighters_current_stats."Date_of_Birth")
-        ) AS "DIM_Fighter_Age",
         raw_fighters_current_stats."Wins" -
         SUM(
             CASE WHEN
@@ -321,7 +316,6 @@ fighters_stats_before_fights_removed_duplicates AS (
         "Fight_Date",
         "DIM_Fighter_ID",
         "DIM_Fighter_Name",
-        "DIM_Fighter_Age",
         "DIM_Fighter_Wins",
         "DIM_Fighter_Loses",
         "DIM_Fighter_Draws",
@@ -352,10 +346,6 @@ fighters_current_stats AS (
         '9999-01-02'::DATE AS "Fight_Date",
         raw_fighters_current_stats."ID" AS "DIM_Fighter_ID",
         raw_fighters_current_stats."Name" AS "DIM_Fighter_Name",
-        DATE_PART(
-            'year',
-            AGE(CURRENT_DATE, raw_fighters_current_stats."Date_of_Birth")
-        ) AS "DIM_Fighter_Age",
         raw_fighters_current_stats."Wins" AS "DIM_Fighter_Wins",
         raw_fighters_current_stats."Loses" AS "DIM_Fighter_Loses",
         raw_fighters_current_stats."Draws" AS "DIM_Fighter_Draws",
@@ -386,7 +376,6 @@ fighters_stats_evolution AS (
 SELECT
     "DIM_Fighter_ID",
     "DIM_Fighter_Name",
-    "DIM_Fighter_Age",
     "DIM_Fighter_Wins",
     "DIM_Fighter_Loses",
     "DIM_Fighter_Draws",
