@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS raw_fighters_stats_before_fight;
+DROP TABLE IF EXISTS raw_fighters_stats_before_fight CASCADE;
 
 CREATE TABLE raw_fighters_stats_before_fight(
     "Fight_ID"                                  SERIAL,

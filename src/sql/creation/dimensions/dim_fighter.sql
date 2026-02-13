@@ -1,9 +1,10 @@
-DROP TABLE IF EXISTS "DIM_Fighter";
+DROP TABLE IF EXISTS "DIM_Fighter" CASCADE;
 
 CREATE TABLE IF NOT EXISTS "DIM_Fighter" (
     "DIM_Fighter_Key"                               SERIAL,
     "DIM_Fighter_ID"                                VARCHAR(50) NOT NULL,
     "DIM_Fighter_Name"                              VARCHAR(50) NOT NULL,
+    "DIM_Fighter_Gender_Key"                        INTEGER NOT NULL,
     "DIM_Fighter_Wins"                              INTEGER NOT NULL,
     "DIM_Fighter_Loses"                             INTEGER NOT NULL,
     "DIM_Fighter_Draws"                             INTEGER NOT NULL,

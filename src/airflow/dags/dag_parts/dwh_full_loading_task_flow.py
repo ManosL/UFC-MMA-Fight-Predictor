@@ -21,8 +21,8 @@ def get_full_warehouse_loading_task_flow():
     start_task = EmptyOperator(task_id="start")
 
     raw_tables = ["raw_fight_stats", "raw_fighters_current_stats"]
-    dim_tables = ["dim_date", "dim_fight_time_format", "dim_fighter",
-                  "dim_gender", "dim_method", "dim_result", "dim_weight_class"]
+    dim_tables = ["dim_date", "dim_fight_time_format", # "dim_fighter", "dim_gender",
+                  "dim_method", "dim_result", "dim_weight_class"]
     fact_tables = ["fact_fight"]
 
     dummy_raw_loading_task = EmptyOperator(task_id="finalize_raw_loading")
@@ -69,6 +69,43 @@ def get_full_warehouse_loading_task_flow():
         ) >>
         dummy_dim_loading_task for dim_table in dim_tables
     ]
+
+    dim_loading_tasks.append(
+        dummy_raw_loading_task >>
+        SQLExecuteQueryOperator(
+            task_id=f"create_dim_gender",
+            conn_id="warehouse_db",
+            sql=read_query_from_sql_file(
+                os.path.join(PATH_TO_DB_TABLES_CREATION_SCRIPTS,
+                             "dimensions", f"dim_gender.sql")
+            )
+        ) >>
+        SQLExecuteQueryOperator(
+            task_id=f"load_dim_gender",
+            conn_id="warehouse_db",
+            sql=read_query_from_sql_file(
+                os.path.join(PATH_TO_DB_TABLES_FULL_LOADING_SCRIPTS,
+                             "dimensions", f"dim_gender.sql")
+            )
+        ) >>
+        SQLExecuteQueryOperator(
+            task_id=f"create_dim_fighter",
+            conn_id="warehouse_db",
+            sql=read_query_from_sql_file(
+                os.path.join(PATH_TO_DB_TABLES_CREATION_SCRIPTS,
+                             "dimensions", f"dim_fighter.sql")
+            )
+        ) >>
+        SQLExecuteQueryOperator(
+            task_id=f"load_dim_fighter",
+            conn_id="warehouse_db",
+            sql=read_query_from_sql_file(
+                os.path.join(PATH_TO_DB_TABLES_FULL_LOADING_SCRIPTS,
+                             "dimensions", f"dim_fighter.sql")
+            )
+        ) >>
+        dummy_dim_loading_task
+    )
 
     fact_loading_tasks = [
         dummy_dim_loading_task >>

@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS new_fighters_current_stats;
+DROP TABLE IF EXISTS new_fighters_current_stats CASCADE;
 
 CREATE TABLE new_fighters_current_stats(
     "ID"                            VARCHAR(50),

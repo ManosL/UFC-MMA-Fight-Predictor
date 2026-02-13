@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS "DIM_Fight_Time_Format";
+DROP TABLE IF EXISTS "DIM_Fight_Time_Format" CASCADE;
 
 CREATE TABLE IF NOT EXISTS "DIM_Fight_Time_Format" (
     "DIM_Fight_Time_Format_Key"      SERIAL PRIMARY KEY,

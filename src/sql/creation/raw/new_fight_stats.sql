@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS new_fight_stats;
+DROP TABLE IF EXISTS new_fight_stats CASCADE;
 
 CREATE TABLE new_fight_stats(
     "Fight_ID"                              INTEGER,

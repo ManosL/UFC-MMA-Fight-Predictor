@@ -2,18 +2,16 @@ from datetime import datetime, timezone
 import os
 import sys
 from airflow import DAG
-from airflow.sdk import Param, get_current_context
-from airflow.models.xcom_arg import XComArg
+from airflow.sdk import Param
 from airflow.utils.task_group import TaskGroup
-from airflow.operators.python import PythonVirtualenvOperator
 from airflow.operators.python import BranchPythonOperator
-from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.operators.empty import EmptyOperator
 
 from dag_parts.crawling_task_flow import get_crawling_task_flow, check_if_incremental_or_full_load_run
 from dag_parts.processing_task_flow import get_processing_task_flow
 from dag_parts.dwh_full_loading_task_flow import get_full_warehouse_loading_task_flow
 from dag_parts.dwh_incremental_loading_task_flow import get_incr_warehouse_loading_task_flow
+from dag_parts.serving_views_creation import get_serving_views_creation_task_flow
 
 
 with DAG(
@@ -54,5 +52,14 @@ with DAG(
     with TaskGroup(group_id="incr_dwh_load") as incr_dwh_load_group:
         get_incr_warehouse_loading_task_flow()
 
+    dwh_join = EmptyOperator(
+        task_id="dwh_loading_join",
+        trigger_rule="none_failed_min_one_success",
+    )
+
+    with TaskGroup(group_id="serving_views_creation") as serving_creation_group:
+        get_serving_views_creation_task_flow()
+
     crawl_data_group >> crawl_join >> proc_and_load_group >> wh_circuit_operator
-    wh_circuit_operator >> [full_dwh_load_group, incr_dwh_load_group]
+    wh_circuit_operator >> [full_dwh_load_group, incr_dwh_load_group] >> dwh_join
+    dwh_join >> serving_creation_group
