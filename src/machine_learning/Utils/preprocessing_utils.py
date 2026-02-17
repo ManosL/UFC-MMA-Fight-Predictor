@@ -53,7 +53,7 @@ def series_categorical_to_int(series, map_dict=None):
 def keep_valid_result_rows(X, Y):
     new_X = pd.DataFrame(X[Y['Result'].isin(['win', 'lose', 'draw'])])
     new_Y = pd.DataFrame(Y[Y['Result'].isin(['win', 'lose', 'draw'])])
-    
+
     new_X.reset_index(drop=True, inplace=True)
     new_Y.reset_index(drop=True, inplace=True)
 
@@ -72,7 +72,7 @@ def _reverse_result(res):
         return 'draw'
     elif res_low == 'no contest':
         return 'no contest'
-    
+
     assert(0 == 1)
     return None
 
@@ -92,9 +92,9 @@ def double_dataset(X, y):
     doubled_X_part_1 = pd.DataFrame(X)
     double_y_part_1  = pd.Series(y)
 
-    doubled_X_part_2 = pd.concat([doubled_X_part_1.iloc[:, 0:6], doubled_X_part_1.iloc[:, 25:44], 
-                                doubled_X_part_1.iloc[:, 6:25]], axis=1, ignore_index=True)
-    
+    doubled_X_part_2 = pd.concat([doubled_X_part_1.iloc[:, 0:6], doubled_X_part_1.iloc[:, 24:42],
+                                doubled_X_part_1.iloc[:, 6:24]], axis=1, ignore_index=True)
+
     doubled_X_part_2.columns = doubled_X_part_1.columns
     double_y_part_2 = double_y_part_1.apply(lambda x: _reverse_result(x))
 
@@ -113,7 +113,7 @@ def fighter_stats_diff_dataset(X):
     Initial columns
 
     ['Fight_ID', 'Fight_Date', 'Gender', 'Weight_Class', 'Title_Fight',
-        'Fight_Time_Format', 'Fighter_1_ID', 'Fighter_1_Name', 'Fighter_1_Nickname',
+        'Fight_Time_Format', 'Fighter_1_ID', 'Fighter_1_Name', # 'Fighter_1_Nickname',
         'Fighter_1_Age', 'Fighter_1_Wins', 'Fighter_1_Loses', 'Fighter_1_Draws',
         'Fighter_1_Avg_Time(MINS)', 'Fighter_1_Height', 'Fighter_1_Reach',
         'Fighter_1_Stance', 'Fighter_1_Sign_SLpMin', 'Fighter_1_Str_Acc',
@@ -130,24 +130,24 @@ def fighter_stats_diff_dataset(X):
     """
 
     new_columns = ['Fight_ID', 'Fight_Date', 'Gender', 'Weight_Class', 'Title_Fight',
-        'Fight_Time_Format', 'Fighter_1_ID', 'Fighter_1_Name', 'Fighter_1_Nickname', 
-        'Fighter_1_Stance', 'Fighter_2_ID', 'Fighter_2_Name', 'Fighter_2_Nickname', 
-        'Fighter_2_Stance', 'Age_Difference', 'Wins_Difference', 'Loses_Difference', 
-        'Draws_Difference', 'Avg_Time(MINS)_Difference', 'Height_Difference', 
+        'Fight_Time_Format', 'Fighter_1_ID', 'Fighter_1_Name', # 'Fighter_1_Nickname',
+        'Fighter_1_Stance', 'Fighter_2_ID', 'Fighter_2_Name', # 'Fighter_2_Nickname',
+        'Fighter_2_Stance', 'Age_Difference', 'Wins_Difference', 'Loses_Difference',
+        'Draws_Difference', 'Avg_Time(MINS)_Difference', 'Height_Difference',
         'Reach_Difference', 'Sign_SLpMin_Difference', 'Str_Acc_Difference',
-        'Sign_SApMin_Difference', 'Defense_Difference', 'Takedown_Avgp15M_Difference', 
+        'Sign_SApMin_Difference', 'Defense_Difference', 'Takedown_Avgp15M_Difference',
         'Takedown_Acc_Difference', 'Takedown_Def_Difference', 'Sub_Avgp15M_Difference']
-    
-    common_attrs_X  = pd.concat([X.iloc[:,0:9], X['Fighter_1_Stance'],
-                                X['Fighter_2_Name'], X['Fighter_2_ID'], X['Fighter_2_Nickname'],
+
+    common_attrs_X  = pd.concat([X.iloc[:,0:8], X['Fighter_1_Stance'],
+                                X['Fighter_2_Name'], X['Fighter_2_ID'], # X['Fighter_2_Nickname'],
                                 X['Fighter_2_Stance']], axis=1, ignore_index=True)
 
     # The "middle" one is the Stance which we wont need in the substraction
-    fighter_1_attrs = pd.concat([X.iloc[:,9:16], X.iloc[:,17:25]],  axis=1, ignore_index=True)
-    fighter_2_attrs = pd.concat([X.iloc[:,28:35], X.iloc[:,36:44]], axis=1, ignore_index=True)
+    fighter_1_attrs = pd.concat([X.iloc[:,8:15], X.iloc[:,16:24]],  axis=1, ignore_index=True)
+    fighter_2_attrs = pd.concat([X.iloc[:,26:33], X.iloc[:,34:42]], axis=1, ignore_index=True)
 
     assert(fighter_1_attrs.shape == fighter_2_attrs.shape)
-    
+
     diff_X = fighter_1_attrs.subtract(fighter_2_attrs)
     diff_X = pd.concat([common_attrs_X, diff_X], axis=1, ignore_index=True)
 

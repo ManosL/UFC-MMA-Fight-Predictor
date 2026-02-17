@@ -28,33 +28,38 @@ def basic_preprocessing(X, Y=None):
         X, Y = keep_valid_result_rows(X, Y)
 
     # Converting height and reach to cm.
-    X['Fighter_1_Height'] = series_convert_feet_inches_to_cm(X['Fighter_1_Height'])
-    X['Fighter_1_Reach']  = series_convert_feet_inches_to_cm(X['Fighter_1_Reach'])
+    # X['Fighter_1_Height'] = series_convert_feet_inches_to_cm(X['Fighter_1_Height'])
+    # X['Fighter_1_Reach']  = series_convert_feet_inches_to_cm(X['Fighter_1_Reach'])
 
     # Removing NaN values
     X['Fighter_1_Height'] = series_fillna_mean(X['Fighter_1_Height'])
     X['Fighter_1_Reach'] = series_fillna_mean(X['Fighter_1_Reach'])
 
-    X['Fighter_2_Height'] = series_fillna_mean(series_convert_feet_inches_to_cm(X['Fighter_2_Height']))
-    X['Fighter_2_Reach'] = series_fillna_mean(series_convert_feet_inches_to_cm(X['Fighter_2_Reach']))
+    # X['Fighter_2_Height'] = series_fillna_mean(series_convert_feet_inches_to_cm(X['Fighter_2_Height']))
+    # X['Fighter_2_Reach'] = series_fillna_mean(series_convert_feet_inches_to_cm(X['Fighter_2_Reach']))
+    X['Fighter_2_Height'] = series_fillna_mean(X['Fighter_2_Height'])
+    X['Fighter_2_Reach'] = series_fillna_mean(X['Fighter_2_Reach'])
 
     X['Fighter_1_Age'] = series_fillna_mean(X['Fighter_1_Age'])
     X['Fighter_2_Age'] = series_fillna_mean(X['Fighter_2_Age'])
 
+    X['Fighter_1_Stance'] = X['Fighter_1_Stance'].replace('Unknown', np.nan)
     X['Fighter_1_Stance'] = series_fillna_most_frequent(X['Fighter_1_Stance'])
+
+    X['Fighter_2_Stance'] = X['Fighter_2_Stance'].replace('Unknown', np.nan)
     X['Fighter_2_Stance'] = series_fillna_most_frequent(X['Fighter_2_Stance'])
 
     # Lowercase every str or categorical column that is not case sensitive
-    str_columns = ['Gender', 'Weight_Class', 'Fight_Time_Format', 'Fighter_1_Name', 
-                    'Fighter_1_Nickname', 'Fighter_1_Stance', 'Fighter_2_Name', 
-                    'Fighter_2_Nickname', 'Fighter_2_Stance']
-    
+    str_columns = ['Gender', 'Weight_Class', 'Fight_Time_Format', 'Fighter_1_Name', #'Fighter_1_Nickname',
+                   'Fighter_1_Stance', 'Fighter_2_Name', # 'Fighter_2_Nickname',
+                   'Fighter_2_Stance']
+
     for col in str_columns:
         X[col] = X[col].apply(lambda x: x.lower())
 
     if Y is not None:
         return X, Y
-    else: 
+    else:
         return X
 
 
@@ -73,7 +78,7 @@ def eda_preprocessing(X, Y):
     new_X.insert(1, 'Fight_Year',  fight_year_series)
     new_X.insert(1, 'Fight_Month', fight_month_series)
     new_X.insert(1, 'Fight_Day',   fight_day_series)
-    
+
     new_X = df_drop_columns(new_X, ['Fight_Date'])
 
     return new_X, new_Y
@@ -92,20 +97,20 @@ def _cat_attrs_to_int(X):
     print(X['Fighter_1_Stance'].unique())
     print(X['Fighter_2_Stance'].unique())
     """
-    
+
     X['Title_Fight']  = series_categorical_to_int(X['Title_Fight'], {False: 0, True: 1})
     X['Gender']       = series_categorical_to_int(X['Gender'], {'female': 0, 'male': 1})
 
     # Need to have weight classes in an ordinal manner
-    weight_class_map = {'catch weight': 9, 'heavyweight': 8, 'light heavyweight': 7, 
+    weight_class_map = {'catch weight': 9, 'heavyweight': 8, 'light heavyweight': 7,
                         'middleweight': 6, 'welterweight': 5, 'lightweight': 4,
-                        'featherweight': 3, 'bantamweight': 2, 'flyweight': 1, 
+                        'featherweight': 3, 'bantamweight': 2, 'flyweight': 1,
                         'strawweight': 0}
 
     X['Weight_Class'] = series_categorical_to_int(X['Weight_Class'], weight_class_map)
-    
-    X['Fight_Time_Format'] = series_categorical_to_int(X['Fight_Time_Format'], 
-                                            {'3rnd(5-5-5)': 0, '5rnd(5-5-5-5-5)': 1})
+
+    X['Fight_Time_Format'] = series_categorical_to_int(X['Fight_Time_Format'],
+                                            {'3rnd(5-5-5)': 0, '3rnd+ot(5-5-5-5)': 0, '5rnd(5-5-5-5-5)': 1})
 
     # Need to convert the stance of each fighter
     stance_map = {'orthodox': 0, 'southpaw': 1, 'open stance': 2,
@@ -120,9 +125,9 @@ def _cat_attrs_to_int(X):
 
 def dim_reduction_preprocessing(X):
     # Dropping unnecessary columns
-    new_X = df_drop_columns(X, ['Fight_ID', 'Fighter_1_ID', 'Fighter_1_Name', 
-                            'Fighter_1_Nickname', 'Fighter_2_ID',
-                            'Fighter_2_Name', 'Fighter_2_Nickname'])
+    new_X = df_drop_columns(X, ['Fight_ID', 'Fighter_1_ID', 'Fighter_1_Name', #'Fighter_1_Nickname',
+                                'Fighter_2_ID', 'Fighter_2_Name'])
+                                #, 'Fighter_2_Nickname'])
 
     # Splitting dates
     new_X['Fight_Date']= pd.to_datetime(new_X['Fight_Date'])
@@ -134,18 +139,18 @@ def dim_reduction_preprocessing(X):
     #new_X.insert(0, 'Fight_Year',  fight_year_series)
     #new_X.insert(0, 'Fight_Month', fight_month_series)
     #new_X.insert(0, 'Fight_Day',   fight_day_series)
-    
+
     new_X = df_drop_columns(new_X, ['Fight_Date'])
 
     # Scaling each numerical column, except the ones that denote percentage
     # In percentage columns we divide by 100.
     scaler = MinMaxScaler()
 
-    categorical_attrs = ['Gender', 'Title_Fight', 'Weight_Class', 'Fight_Time_Format', 
+    categorical_attrs = ['Gender', 'Title_Fight', 'Weight_Class', 'Fight_Time_Format',
                         'Fighter_1_Stance', 'Fighter_2_Stance']
 
     percentage_attrs  = ['Fighter_1_Str_Acc', 'Fighter_1_Defense', 'Fighter_1_Takedown_Acc',
-                        'Fighter_1_Takedown_Def', 'Fighter_2_Str_Acc', 'Fighter_2_Defense', 
+                        'Fighter_1_Takedown_Def', 'Fighter_2_Str_Acc', 'Fighter_2_Defense',
                         'Fighter_2_Takedown_Acc', 'Fighter_2_Takedown_Def']
 
     for attr in new_X.columns:
@@ -156,13 +161,14 @@ def dim_reduction_preprocessing(X):
             scale_vals = scaler.fit_transform(scale_vals)
 
             new_X[attr] = np.reshape(scale_vals, (scale_vals_len, ))
-        
+
         if attr in percentage_attrs:
             new_X[attr] = new_X[attr].apply(lambda x: float(x) / 100)
 
     # Converting categoricals to numericals
     _cat_attrs_to_int(new_X)
 
+    print(new_X.isna().sum())
     return new_X
 
 
@@ -170,9 +176,9 @@ def dim_reduction_preprocessing(X):
 
 def _test_train_common_preprocessing(X, y, is_diff):
     # Dropping unnecessary columns
-    new_X = df_drop_columns(X, ['Fight_ID', 'Fighter_1_ID', 'Fighter_1_Name', 
-                                'Fighter_1_Nickname', 'Fighter_2_ID',
-                                'Fighter_2_Name', 'Fighter_2_Nickname'])
+    new_X = df_drop_columns(X, ['Fight_ID', 'Fighter_1_ID', 'Fighter_1_Name', # 'Fighter_1_Nickname',
+                                'Fighter_2_ID', 'Fighter_2_Name'])
+                                # 'Fighter_2_Nickname'])
 
     new_y = pd.Series(y) if y is not None else None
 
@@ -186,7 +192,7 @@ def _test_train_common_preprocessing(X, y, is_diff):
     #new_X.insert(0, 'Fight_Year',  fight_year_series)
     #new_X.insert(0, 'Fight_Month', fight_month_series)
     #new_X.insert(0, 'Fight_Day',   fight_day_series)
-    
+
     new_X = df_drop_columns(new_X, ['Fight_Date'])
 
     # Converting categoricals to numericals
@@ -208,7 +214,7 @@ def before_train_preprocessing(X_train, y_train, X_test, y_test=None, to_double=
 
     if to_double == True:
         new_train_X, new_train_y = double_dataset(X_train, y_train)
-    
+
     if to_diff == True:
         new_train_X = fighter_stats_diff_dataset(new_train_X)
         new_test_X  = fighter_stats_diff_dataset(new_test_X)
@@ -220,11 +226,11 @@ def before_train_preprocessing(X_train, y_train, X_test, y_test=None, to_double=
     # Percentage features are divided by 100
     scaler = MinMaxScaler()
 
-    categorical_attrs = ['Gender', 'Title_Fight', 'Weight_Class', 'Fight_Time_Format', 
+    categorical_attrs = ['Gender', 'Title_Fight', 'Weight_Class', 'Fight_Time_Format',
                         'Fighter_1_Stance', 'Fighter_2_Stance']
 
     percentage_attrs  = ['Fighter_1_Str_Acc', 'Fighter_1_Defense', 'Fighter_1_Takedown_Acc',
-                        'Fighter_1_Takedown_Def', 'Fighter_2_Str_Acc', 'Fighter_2_Defense', 
+                        'Fighter_1_Takedown_Def', 'Fighter_2_Str_Acc', 'Fighter_2_Defense',
                         'Fighter_2_Takedown_Acc', 'Fighter_2_Takedown_Def']
 
     assert(list(new_train_X.columns) == list(new_test_X.columns))
@@ -248,7 +254,7 @@ def before_train_preprocessing(X_train, y_train, X_test, y_test=None, to_double=
         if attr in percentage_attrs:
             new_train_X[attr] = new_train_X[attr].apply(lambda x: float(x) / 100)
             new_test_X[attr]  = new_test_X[attr].apply(lambda x: float(x) / 100)
-    
+
     if new_test_y is not None:
         return new_train_X, new_train_y, new_test_X, new_test_y
     else:

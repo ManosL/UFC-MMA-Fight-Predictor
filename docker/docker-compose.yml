@@ -97,6 +97,33 @@ services:
       interval: 30s
       timeout: 5s
       retries: 3
+  machine-learning-python:
+    image: python:3.11-slim
+    working_dir: /workspace
+    volumes:
+      - ../src/machine_learning:/workspace
+      - ../src/machine_learning/results:/workspace/results
+      - pip-cache:/root/.cache/pip   # speed up pip installs
+    env_file:
+      - .env
+    environment:
+      - DATA_WAREHOUSE_POSTGRES_DB_NAME=${DATA_WAREHOUSE_POSTGRES_DB_NAME}
+      - DATA_WAREHOUSE_POSTGRES_USERNAME=${DATA_WAREHOUSE_POSTGRES_USERNAME}
+      - DATA_WAREHOUSE_POSTGRES_PASSWORD=${DATA_WAREHOUSE_POSTGRES_PASSWORD}
+      - DATA_WAREHOUSE_POSTGRES_HOST_PORT=${DATA_WAREHOUSE_POSTGRES_HOST_PORT}
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/workspace
+    entrypoint: /bin/sh -lc
+    command: |
+      'python -m pip install --upgrade pip &&
+       if [ -f requirements.txt ]; then pip install -r requirements.txt; fi &&
+       echo "Pybox ready. Sleeping..." &&
+       tail -f /dev/null'
+    healthcheck:
+      test: ["CMD-SHELL", "python -c 'import sys; sys.exit(0)'"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
 
 volumes:
   minio-data:
