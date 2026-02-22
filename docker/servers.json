@@ -17,6 +17,15 @@
       "Host": "postgres-1",
       "SSLMode": "prefer",
       "MaintenanceDB": "warehouse"
+    },
+    "3": {
+      "Name": "MLflow Metadata",
+      "Group": "MLflow",
+      "Port": 5432,
+      "Username": "mlflowadmin",
+      "Host": "postgres-2",
+      "SSLMode": "prefer",
+      "MaintenanceDB": "mlflow"
     }
   }
 }
