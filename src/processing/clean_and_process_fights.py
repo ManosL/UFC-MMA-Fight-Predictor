@@ -52,7 +52,6 @@ def clean_and_preprocess_initial_dfs(init_event_df):
     init_event_df = init_event_df[init_event_df['Fight Time Format'].isin(valid_fight_formats)]
     init_event_df = init_event_df.sort_values(by='Fight Date')
 
-    # TODO: ADD INFRASTRUCTURE TO ADD EXTRA FEATURES JUST IN CASE
     # Add the following here for now but normally it should be on preprocessing
     init_event_df['Duration_Mins'] = init_event_df[['Round', 'Time']].apply(
         lambda x: (int(x['Round']) - 1) * 5.0 + (int(x['Time'].split(':')[0]) +

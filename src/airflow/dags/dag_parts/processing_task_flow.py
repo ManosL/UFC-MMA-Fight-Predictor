@@ -1,3 +1,4 @@
+from collections.abc import Sequence
 from datetime import datetime, timezone
 import os
 import sys
@@ -5,13 +6,14 @@ from airflow import DAG
 from airflow.sdk import Param, get_current_context
 from airflow.models.xcom_arg import XComArg
 from airflow.utils.task_group import TaskGroup
+from airflow.models.baseoperator import BaseOperator
 from airflow.operators.python import PythonVirtualenvOperator
 from airflow.operators.python import BranchPythonOperator
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.operators.empty import EmptyOperator
 
 
-def get_processing_requirements():
+def get_processing_requirements() -> Sequence[str]:
     with open("/opt/airflow/processing/requirements.txt") as f:
         requirements = [l.strip() for l in f.readlines()
                         if not l.strip().startswith("#")]
@@ -19,7 +21,7 @@ def get_processing_requirements():
     return requirements
 
 
-def clean_and_process_fights_venv():
+def clean_and_process_fights_venv() -> None:
     sys.path.append("/opt/airflow/processing")
     from clean_and_process_fights import main
 
@@ -27,7 +29,7 @@ def clean_and_process_fights_venv():
     return
 
 
-def configure_fighters_dataset_venv():
+def configure_fighters_dataset_venv() -> None:
     sys.path.append("/opt/airflow/processing")
     from Configure_Fighters_Dataset import main
 
@@ -35,7 +37,7 @@ def configure_fighters_dataset_venv():
     return
 
 
-def load_to_postgres_venv():
+def load_to_postgres_venv() -> None:
     sys.path.append("/opt/airflow/processing")
     from load_to_postgres import main
 
@@ -43,7 +45,7 @@ def load_to_postgres_venv():
     return
 
 
-def get_processing_task_flow():
+def get_processing_task_flow() -> BaseOperator:
     start_task = EmptyOperator(task_id="start_processing")
 
     processing_requirements = get_processing_requirements()

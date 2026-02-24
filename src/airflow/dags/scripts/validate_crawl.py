@@ -1,12 +1,13 @@
 import os
 from minio import Minio
+from typing import Any
 import json
 
 
 class CrawlingException(Exception):
     pass
 
-def get_minio_client():
+def get_minio_client() -> Minio:
     minio_client = Minio(
         'minio:9000',
         access_key=os.environ.get('MINIO_USERNAME'),
@@ -16,7 +17,11 @@ def get_minio_client():
 
     return minio_client
 
-def read_json_from_minio(minio_client, bucket_name, file_name):
+def read_json_from_minio(
+    minio_client: Minio,
+    bucket_name: str,
+    file_name: str
+) -> dict[str, Any]:
     response = minio_client.get_object(bucket_name, file_name)
 
     # read into pandas
@@ -28,7 +33,7 @@ def read_json_from_minio(minio_client, bucket_name, file_name):
 
     return json_obj
 
-def validate_events_crawl(stats):
+def validate_events_crawl(stats: dict[str, Any]) -> None:
     log_file_msg = f"Check logs at {stats['log_file_url']}"
     if stats["events_expected"] != stats["events_parsed"]:
         raise CrawlingException(f"Expected to crawl {stats['events_expected']} events but crawled {stats['events_parsed']}.\n{log_file_msg}")
@@ -41,7 +46,7 @@ def validate_events_crawl(stats):
 
     return
 
-def validate_fighters_crawl(stats):
+def validate_fighters_crawl(stats: dict[str, Any]) -> None:
     log_file_msg = f"Check logs at {stats['log_file_url']}"
     if stats["fighters_expected"] != stats["fighters_parsed"]:
         raise CrawlingException(f"Expected to crawl {stats['fighters_expected']} fighters but crawled {stats['fighters_parsed']}.\n{log_file_msg}")
@@ -51,7 +56,11 @@ def validate_fighters_crawl(stats):
 
     return
 
-def validate_crawl(spider_name, bucket_name, job_id):
+def validate_crawl(
+    spider_name: str,
+    bucket_name: str,
+    job_id: str
+) -> None:
     minio_client = get_minio_client()
 
     stats = read_json_from_minio(minio_client, bucket_name, f"{job_id}.log")

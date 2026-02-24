@@ -1,4 +1,5 @@
 import os
+from airflow.models.baseoperator import BaseOperator
 from airflow.utils.task_group import TaskGroup
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.operators.empty import EmptyOperator
@@ -8,7 +9,7 @@ from dag_parts.common import (
 )
 
 
-def read_query_from_sql_file(path):
+def read_query_from_sql_file(path: str) -> str:
     assert path.strip().endswith('.sql')
 
     with open(path, 'r') as f:
@@ -17,7 +18,7 @@ def read_query_from_sql_file(path):
     return query
 
 
-def get_serving_views_creation_task_flow():
+def get_serving_views_creation_task_flow() -> BaseOperator:
     start_task = EmptyOperator(task_id="start")
 
     with TaskGroup(group_id="machine_learning") as machine_learning_group:

@@ -3,9 +3,11 @@ from minio import Minio
 from io import BytesIO, StringIO
 import pandas as pd
 import psycopg2
+from psycopg2.extensions import connection
+from typing import Any
 
 
-def get_minio_client():
+def get_minio_client() -> Minio:
     minio_client = Minio(
         'minio:9000',
         access_key=os.environ.get('MINIO_USERNAME'),
@@ -16,7 +18,7 @@ def get_minio_client():
     return minio_client
 
 
-def get_postgres_connection():
+def get_postgres_connection() -> connection:
     conn = psycopg2.connect(
         dbname=os.environ.get('DATA_WAREHOUSE_POSTGRES_DB_NAME'),
         user=os.environ.get('DATA_WAREHOUSE_POSTGRES_USERNAME'),
@@ -28,8 +30,12 @@ def get_postgres_connection():
     return conn
 
 
-def read_csv_from_minio_to_pandas(minio_client, bucket_name,
-                                  file_name, **read_csv_kwargs):
+def read_csv_from_minio_to_pandas(
+    minio_client: Minio,
+    bucket_name: str,
+    file_name: str,
+    **read_csv_kwargs: Any
+) -> pd.DataFrame:
     response = minio_client.get_object(bucket_name, file_name)
 
     # read into pandas
@@ -42,9 +48,13 @@ def read_csv_from_minio_to_pandas(minio_client, bucket_name,
     return df
 
 
-def write_pandas_csv_to_minio(minio_client, bucket_name,
-                              file_name, df,
-                              **to_csv_kwargs):
+def write_pandas_csv_to_minio(
+    minio_client: Minio,
+    bucket_name: str,
+    file_name: str,
+    df: pd.DataFrame,
+    **to_csv_kwargs: Any
+) -> None:
     csv_buffer = BytesIO()
 
     df.to_csv(csv_buffer, **to_csv_kwargs)

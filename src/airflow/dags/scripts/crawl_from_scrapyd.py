@@ -3,17 +3,18 @@ import requests
 from time import sleep
 from datetime import datetime, timezone
 import secrets
+from typing import Any
 
 
 def schedule_spider(
-        base_url,
-        project_name,
-        spider_name,
-        scrapyd_username,
-        scrapyd_password,
-        is_incremental="False",
-        lookup_days=10
-):
+        base_url: str,
+        project_name: str,
+        spider_name: str,
+        scrapyd_username: str,
+        scrapyd_password: str,
+        is_incremental: str = "False",
+        lookup_days: int = 10
+) -> dict[str, Any]:
     now = datetime.now(timezone.utc)
     timestamp = now.strftime("%Y-%m-%dT%H_%M_%S_%f")
     job_id = f"{timestamp}_{secrets.token_hex(3)}"
@@ -41,7 +42,12 @@ def schedule_spider(
 
     return response
 
-def check_running_spider_job_status(base_url, job_id, scrapyd_username, scrapyd_password):
+def check_running_spider_job_status(
+    base_url: str,
+    job_id: str,
+    scrapyd_username: str,
+    scrapyd_password: str
+) -> str:
     response = requests.get(
                     f'{base_url}/status.json',
                     params={'job': job_id},
@@ -57,12 +63,12 @@ def check_running_spider_job_status(base_url, job_id, scrapyd_username, scrapyd_
 
 
 def crawl_from_scrapyd(
-    base_url,
-    project_name,
-    spider_name,
-    is_incremental="False",
-    lookup_days=10
-):
+    base_url: str,
+    project_name: str,
+    spider_name: str,
+    is_incremental: str = "False",
+    lookup_days: int = 10
+) -> str:
     scrapyd_username = os.environ.get('SCRAPYD_USERNAME')
     scrapyd_password = os.environ.get('SCRAPYD_PASSWORD')
 
@@ -87,5 +93,3 @@ def crawl_from_scrapyd(
 
     print('Crawling finished successfully')
     return job_id
-
-# crawl_from_scrapyd('http://scrapy-server:6800', 'UFCStats_Crawlers', 'event_spider')

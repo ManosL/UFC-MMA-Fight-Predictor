@@ -1,18 +1,19 @@
 import os
 import sys
 from airflow.models.xcom_arg import XComArg
+from airflow.models.baseoperator import BaseOperator
 from airflow.operators.python import PythonVirtualenvOperator
 from airflow.operators.python import BranchPythonOperator
 from airflow.operators.empty import EmptyOperator
 
 
 def crawl_from_scrapyd_venv(
-    base_url,
-    project_name,
-    spider_name,
-    is_incremental="False",
-    lookup_days=15,
-):
+    base_url: str,
+    project_name: str,
+    spider_name: str,
+    is_incremental: bool = "False",
+    lookup_days: int = 15,
+) -> str:
     sys.path.append('/opt/airflow/dags')
     from scripts.crawl_from_scrapyd import crawl_from_scrapyd
 
@@ -27,7 +28,11 @@ def crawl_from_scrapyd_venv(
     return job_id
 
 
-def validate_crawl_venv(spider_name, bucket_name, job_id):
+def validate_crawl_venv(
+    spider_name: str,
+    bucket_name: str,
+    job_id: str
+) -> None:
     sys.path.append('/opt/airflow/dags')
     from scripts.validate_crawl import validate_crawl
 
@@ -36,12 +41,15 @@ def validate_crawl_venv(spider_name, bucket_name, job_id):
     return
 
 
-def check_if_incremental_or_full_load_run(is_incremental, incr_task_id, full_task_id):
-    print(is_incremental)
+def check_if_incremental_or_full_load_run(
+    is_incremental: str,
+    incr_task_id: str,
+    full_task_id: str
+) -> str:
     return incr_task_id if is_incremental.lower() == "true" else full_task_id
 
 
-def get_full_crawl_task_flow():
+def get_full_crawl_task_flow() -> BaseOperator:
     start_task = EmptyOperator(task_id="full_crawl_start")
 
     crawl_fights_task = PythonVirtualenvOperator(
@@ -114,7 +122,7 @@ def get_full_crawl_task_flow():
     return start_task
 
 
-def get_incremental_crawl_task_flow():
+def get_incremental_crawl_task_flow() -> BaseOperator:
     start_task = EmptyOperator(task_id="incremental_crawl_start")
 
     crawl_fights_task = PythonVirtualenvOperator(
@@ -184,7 +192,7 @@ def get_incremental_crawl_task_flow():
     crawl_fighters_task >> validate_fighters_crawl_task >>end_task
     return start_task
 
-def get_crawling_task_flow():
+def get_crawling_task_flow() -> BaseOperator:
     circuit_operator = \
     BranchPythonOperator(
         task_id="check_if_incremental_run",

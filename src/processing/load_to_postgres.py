@@ -8,7 +8,7 @@ from utils import get_minio_client, get_postgres_connection
 from utils import read_csv_from_minio_to_pandas
 
 
-def main():
+def main() -> int:
     minio_client = get_minio_client()
     postgres_conn = get_postgres_connection()
     postgres_cursor = postgres_conn.cursor()
@@ -28,7 +28,6 @@ def main():
                         ]
 
     for filename, table_name in zip(files_to_load, tables_to_load_to):
-        # TODO: ADD THE CREATION SCRIPTS DIR PATH AS A CONSTANT
         table_creation_file_path = f'/opt/airflow/sql/creation/raw/{table_name}.sql'
 
         df = read_csv_from_minio_to_pandas(minio_client, bucket_name, filename,
@@ -51,7 +50,7 @@ def main():
 
     postgres_cursor.close()
     postgres_conn.close()
-    # TODO: NOW THAT YOU RUN IT CHECK IF THE DATA IS WRITTEN CORRECTLY(SOS SOS SOS)
+
     return 0
 
 

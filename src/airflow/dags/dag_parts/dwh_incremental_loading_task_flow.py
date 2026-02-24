@@ -1,4 +1,5 @@
 import os
+from airflow.models.baseoperator import BaseOperator
 from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.operators.empty import EmptyOperator
 
@@ -9,7 +10,7 @@ from dag_parts.common import (
 )
 
 
-def read_query_from_sql_file(path):
+def read_query_from_sql_file(path: str) -> str:
     assert path.strip().endswith('.sql')
 
     with open(path, 'r') as f:
@@ -18,7 +19,7 @@ def read_query_from_sql_file(path):
     return query
 
 
-def get_incr_warehouse_loading_task_flow():
+def get_incr_warehouse_loading_task_flow() -> BaseOperator:
     start_task = EmptyOperator(task_id="start")
 
     raw_tables = ["raw_fight_stats", "raw_fighters_current_stats"]
