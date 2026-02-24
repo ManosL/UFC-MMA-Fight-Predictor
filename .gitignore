@@ -14,3 +14,5 @@ UFCStats_Crawlers/setup.py
 UFCStats_Crawlers/setup_backup.py
 UFCStats_Crawlers/*.egg
 src/machine_learning/results
+__archive/
+__playground/
