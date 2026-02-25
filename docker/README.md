@@ -13,6 +13,7 @@ In this README, I will provide the necessary instructions to setup the infrastru
 
 - Initially, do the initial Airflow setup by running the following command:
 ```
+cd docker/
 docker compose -f docker-compose.yml -f airflow-docker-compose.yaml up airflow-init
 ```
 - After this finishes, setup the rest of the containers by running:

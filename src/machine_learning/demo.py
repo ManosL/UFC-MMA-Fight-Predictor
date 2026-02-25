@@ -21,57 +21,39 @@ mma_weight_classes = ['atomweight', 'strawweight', 'flyweight', 'bantamweight', 
 
 
 def extract_args(argv):
-    if len(argv) != 6:
+    if len(argv) != 2:
         print("Invalid number of arguments")
-        print("Usage: python3 demo.py -t <train_dataset_path> -f <fighters_df_path> -p <prediction_dataset_path>")
+        print("Usage: python3 demo.py -p <prediction_dataset_path>")
 
-        return None, None, None
-    
-    train_dataset_path    = None
-    fighters_dataset_path = None
+        return None
+
     matchups_dataset_path = None
 
-    for i in range(0, 6, 2):
+    for i in range(0, 2, 2):
         curr_arg = argv[i]
         arg_val  = argv[i + 1]
 
         if not os.path.isfile(arg_val):
             print("File " + arg_val + " does not exist or it is not a file.")
-            print("Usage: python3 demo.py -t <train_dataset_path> -f <fighters_df_path> -p <prediction_dataset_path>")
+            print("Usage: python3 demo.py -p <prediction_dataset_path>")
 
-            return None, None, None
+            return None
 
-        if curr_arg == '-t':
-            if train_dataset_path is not None:
-                print("You already specified training dataset's path")
-                print("Usage: python3 demo.py -t <train_dataset_path> -f <fighters_df_path> -p <prediction_dataset_path>")
-
-                return None, None, None
-
-            train_dataset_path = arg_val    
-        elif curr_arg == '-f':
-            if fighters_dataset_path is not None:
-                print("You already specified fighters dataset's path")
-                print("Usage: python3 demo.py -t <train_dataset_path> -f <fighters_df_path> -p <prediction_dataset_path>")
-
-                return None, None, None
-
-            fighters_dataset_path = arg_val  
-        elif curr_arg == '-p':
+        if curr_arg == '-p':
             if matchups_dataset_path is not None:
                 print("You already specified matchups dataset's path")
-                print("Usage: python3 demo.py -t <train_dataset_path> -f <fighters_dataset_path> -p <matchups_dataset_path>")
+                print("Usage: python3 demo.py -p <matchups_dataset_path>")
 
-                return None, None, None
+                return None
 
-            matchups_dataset_path = arg_val 
+            matchups_dataset_path = arg_val
         else:
             print("Invalid argument " + curr_arg)
-            print("Usage: python3 demo.py -t <train_dataset_path> -f <fighters_df_path> -p <prediction_dataset_path>")
+            print("Usage: python3 demo.py -p <prediction_dataset_path>")
 
-            return None, None, None
+            return None
 
-    return train_dataset_path, fighters_dataset_path, matchups_dataset_path
+    return matchups_dataset_path
 
 
 
@@ -88,18 +70,18 @@ def validate_matchup_df(matchups_df, fighters_df):
         if weight_class not in mma_weight_classes:
             print('Some matchup has an invalid weight class')
             return False
-    
+
     # Check that in title fight field he gave only True/False
     for rounds in list(matchups_df['Title Fight']):
         if rounds not in [True, False]:
             print('You should specify if the fight is title fight with True or False')
             return False
-    
+
     # Check that he wrote 3 or 5 in rounds field
     for rounds in list(matchups_df['Rounds']):
         if rounds not in [3, 5]:
             print('In the rounds field you can only give 3 or 5')
-            return False         
+            return False
 
     # Check that fights are of the same gender
     fighter_1_genders = list(matchups_df.merge(pd.merge(matchups_df, fighters_df, how='inner', left_on=['Fighter 1 ID'],
@@ -122,13 +104,13 @@ def create_matchup_features(matchups_df, fighters_df):
     today_date  = datetime.today().strftime('%Y-%m-%d')
     today_year  = int(today_date.split('-')[0])
 
-    new_columns = ['Fight_ID', 'Fight_Date', 'Gender', 'Weight_Class', 'Title_Fight', 'Fight_Time_Format', 'Fighter_1_ID', 
-        'Fighter_1_Name', 'Fighter_1_Nickname', 'Fighter_1_Age', 'Fighter_1_Wins', 'Fighter_1_Loses', 'Fighter_1_Draws', 'Fighter_1_Avg_Time(MINS)', 
-        'Fighter_1_Height', 'Fighter_1_Reach', 'Fighter_1_Stance', 'Fighter_1_Sign_SLpMin', 'Fighter_1_Str_Acc', 'Fighter_1_Sign_SApMin', 
-        'Fighter_1_Defense', 'Fighter_1_Takedown_Avgp15M', 'Fighter_1_Takedown_Acc', 'Fighter_1_Takedown_Def', 'Fighter_1_Sub_Avgp15M', 
-        'Fighter_2_ID', 'Fighter_2_Name', 'Fighter_2_Nickname', 'Fighter_2_Age', 'Fighter_2_Wins', 'Fighter_2_Loses', 'Fighter_2_Draws', 
-        'Fighter_2_Avg_Time(MINS)', 'Fighter_2_Height', 'Fighter_2_Reach', 'Fighter_2_Stance', 'Fighter_2_Sign_SLpMin', 'Fighter_2_Str_Acc', 
-        'Fighter_2_Sign_SApMin', 'Fighter_2_Defense', 'Fighter_2_Takedown_Avgp15M', 'Fighter_2_Takedown_Acc', 'Fighter_2_Takedown_Def', 
+    new_columns = ['Fight_ID', 'Fight_Date', 'Gender', 'Weight_Class', 'Title_Fight', 'Fight_Time_Format', 'Fighter_1_ID',
+        'Fighter_1_Name', 'Fighter_1_Nickname', 'Fighter_1_Age', 'Fighter_1_Wins', 'Fighter_1_Loses', 'Fighter_1_Draws', 'Fighter_1_Avg_Time(MINS)',
+        'Fighter_1_Height', 'Fighter_1_Reach', 'Fighter_1_Stance', 'Fighter_1_Sign_SLpMin', 'Fighter_1_Str_Acc', 'Fighter_1_Sign_SApMin',
+        'Fighter_1_Defense', 'Fighter_1_Takedown_Avgp15M', 'Fighter_1_Takedown_Acc', 'Fighter_1_Takedown_Def', 'Fighter_1_Sub_Avgp15M',
+        'Fighter_2_ID', 'Fighter_2_Name', 'Fighter_2_Nickname', 'Fighter_2_Age', 'Fighter_2_Wins', 'Fighter_2_Loses', 'Fighter_2_Draws',
+        'Fighter_2_Avg_Time(MINS)', 'Fighter_2_Height', 'Fighter_2_Reach', 'Fighter_2_Stance', 'Fighter_2_Sign_SLpMin', 'Fighter_2_Str_Acc',
+        'Fighter_2_Sign_SApMin', 'Fighter_2_Defense', 'Fighter_2_Takedown_Avgp15M', 'Fighter_2_Takedown_Acc', 'Fighter_2_Takedown_Def',
         'Fighter_2_Sub_Avgp15M']
 
     # I'll just add adhoc IDs, dates and nicknames as they will be dropped afterwards
@@ -143,20 +125,20 @@ def create_matchup_features(matchups_df, fighters_df):
                                 right_on=['Fighter ID']))[fighters_df.columns]
 
     # Getting fighters age at time of fight
-    fighter_1_age = fighter_1_df['DOB'].apply(lambda x: today_year - int(x.split(' ')[2]))
-    fighter_2_age = fighter_2_df['DOB'].apply(lambda x: today_year - int(x.split(' ')[2]))
+    fighter_1_age = fighter_1_df['DOB'].apply(lambda x: today_year - int(x.year))
+    fighter_2_age = fighter_2_df['DOB'].apply(lambda x: today_year - int(x.year))
 
     # Converting rounds to fight time format
     fight_time_format = matchups_df['Rounds'].apply(lambda x: str(x) + 'Rnd(' + '-'.join(['5'] * int(x)) + ')')
 
     # Creating the validation dataset
-    
+
     # Inserting the common attributes columns
     validation_df = pd.concat([fight_ids, fight_dates, fighter_1_df['Gender'], matchups_df['Weight Class'],
                                 matchups_df['Title Fight'], fight_time_format], axis=1)
-    
+
     # Inserting First fighter's attributes
-    validation_df = pd.concat([validation_df, fighter_1_df['Fighter ID'], fighter_1_df['Fighter Name'], fighter_nicks, 
+    validation_df = pd.concat([validation_df, fighter_1_df['Fighter ID'], fighter_1_df['Fighter Name'], # fighter_nicks,
                                 fighter_1_age, fighter_1_df['Wins'], fighter_1_df['Loses'],
                                 fighter_1_df['Draws'], fighter_1_df['Avg.Time(in Mins)']], axis=1)
 
@@ -168,7 +150,7 @@ def create_matchup_features(matchups_df, fighters_df):
                                 fighter_1_df['Sub. Avg.']], axis=1)
 
     # Inserting Second fighter's attributes
-    validation_df = pd.concat([validation_df, fighter_2_df['Fighter ID'], fighter_2_df['Fighter Name'], fighter_nicks, 
+    validation_df = pd.concat([validation_df, fighter_2_df['Fighter ID'], fighter_2_df['Fighter Name'], # fighter_nicks,
                                 fighter_2_age, fighter_2_df['Wins'], fighter_2_df['Loses'],
                                 fighter_2_df['Draws'], fighter_2_df['Avg.Time(in Mins)']], axis=1)
 
@@ -179,6 +161,8 @@ def create_matchup_features(matchups_df, fighters_df):
                                 fighter_2_df['TD Acc.'], fighter_2_df['TD Def.'],
                                 fighter_2_df['Sub. Avg.']], axis=1)
 
+    new_columns.remove('Fighter_1_Nickname')
+    new_columns.remove('Fighter_2_Nickname')
     validation_df.columns = new_columns
 
     return validation_df
@@ -219,34 +203,36 @@ def make_and_output_preds(model, matchups_df, names_df):
         _, names = iterrow
 
         print(i, '.', names['Fighter_1_Name'], 'vs', names['Fighter_2_Name'])
-        
+
         win_prefix  = names['Fighter_1_Name']
         lose_prefix = names['Fighter_2_Name']
-        
+
         for curr_class, prefix in zip(['win', 'lose', 'draw'], [win_prefix, lose_prefix, 'draw']):
             print('\t' + prefix + ':', pred[curr_class])
-        
+
         print()
 
     return
 
 
 
-def main(train_dataset_path, fighters_dataset_path, matchups_path):
+def main(matchups_path):
     # Reading the necessary datasets
-    fights_df, fights_labels = read_fights_data(train_dataset_path) 
-    fighters_df              = read_fighters_data(fighters_dataset_path)
+    fights_df, fights_labels = read_fights_data('')
+    fighters_df              = read_fighters_data('')
     matchups_df              = read_matchup_data(matchups_path)
 
     # Configuring matchups and get the names to a seperate dataframe
- 
+
     if validate_matchup_df(matchups_df, fighters_df) == True:
         prediction_df = create_matchup_features(matchups_df, fighters_df)
     else:
         return 1
 
-    names_df      = pd.concat([prediction_df['Fighter_1_Name'], prediction_df['Fighter_1_Nickname']], axis=1)
-    names_df      = pd.concat([names_df, prediction_df['Fighter_2_Name'], prediction_df['Fighter_2_Nickname']], axis=1)
+    # names_df      = pd.concat([prediction_df['Fighter_1_Name'], prediction_df['Fighter_1_Nickname']], axis=1)
+    # names_df      = pd.concat([names_df, prediction_df['Fighter_2_Name'], prediction_df['Fighter_2_Nickname']], axis=1)
+    names_df      = pd.concat([prediction_df['Fighter_1_Name']], axis=1)
+    names_df      = pd.concat([names_df, prediction_df['Fighter_2_Name']], axis=1)
 
     # Preprocessing the fights dataset and the validation one.
     fights_df, fights_labels = basic_preprocessing(fights_df, fights_labels)
@@ -254,7 +240,7 @@ def main(train_dataset_path, fighters_dataset_path, matchups_path):
 
     fights_labels = fights_labels['Result']
 
-    fights_df, fights_labels, prediction_df = before_train_preprocessing(fights_df, fights_labels, 
+    fights_df, fights_labels, prediction_df = before_train_preprocessing(fights_df, fights_labels,
                                                         prediction_df, to_double=True, to_diff=True)
 
     # Training our model
@@ -267,8 +253,8 @@ def main(train_dataset_path, fighters_dataset_path, matchups_path):
 
 """
 Plan for execution(it will run on the best classifier)
-python3 demo.py -t <train_dataset_path> -f <fighters_df_path> -p <prediction_dataset_path>
-where: 
+python3 demo.py -p <prediction_dataset_path>
+where:
     1. Training set will be always be the ./data/Fights.csv and the dataset with the fighters will
     be the ./data/Fighters.csv.
 
@@ -279,13 +265,12 @@ where:
         -> Rounds(should be 3 or 5)
         -> Fighter 1 ID(can be taken from Fighters.csv)
         -> Fighter 2 ID
-    
+
     and the attributes should have the following constraints:
         -> The fighter's should be of the same gender(this will be taken from their last fight)
         -> The weightclass should be valid
 """
 if __name__ == '__main__':
-    train_dataset_path, fighters_dataset_path, matchups_dataset_path = extract_args(sys.argv[1:])
+    matchups_dataset_path = extract_args(sys.argv[1:])
 
-    if train_dataset_path is not None:
-        main(train_dataset_path, fighters_dataset_path, matchups_dataset_path)
+    main(matchups_dataset_path)

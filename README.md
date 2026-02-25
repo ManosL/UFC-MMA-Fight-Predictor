@@ -2,80 +2,16 @@
 
 ## Overview
 
-In this project I build a Mixed Martial Arts Fight Predictor from the ground up, i.e.
-from scraping data to evaluating a model.
+In this project I build a Mixed Martial Arts Fight Predictor from the ground up, i.e. from scraping data to evaluating a model.
 
 ## Manual
 
-### Installation instructions
-In order to run the experiments in your local machine you should do the following steps.
-
-1. Clone the repo by running `git clone https://github.com/ManosL/UFC-MMA-Fight-Predictor.git`
-2. Afterwards, install virtualenv in pip3(if you did not do that already) by running
-`pip3 install virtualenv`
-3. Then move to this repository directory.
-4. Then create and activate the virtual environment by running the following commands
-```
-virtualenv <venv_name>
-source bin/activate
-```
-5. Finally install the requirements by running `pip3 install -r requirements.txt`
-6. You are ready to move to `src/` directory and run the experiments and demo programs!
-
-### Experiments instructions
-
-In order to run the experiments done in order to write the report, go into `src/` directory and run the following
-command:
-
-```
-        python3 experiments.py
-```
-
-WARNING: This will take time in order to complete.
-
-While running this program you will see logs in terminal and the graphs, except the correlation matrix,
-will be opened in browser.
-
-### Demo instructions
-
-In order to run the demo you should move again into the `src/` directory and run the following command:
-```
-python3 demo.py -t <training_dataset_path> -f <fighters_dataset_path> -p <prediction_dataset_path>
-```
-where the names of those variables are pretty descriptive, but we should also mention the following:
-- Because the default datasets are in `src/data` folder the required command to run the demo is the following:
-```
-python3 demo.py -t ./data/Fights.csv -f ./data/Fighters.csv -p ./data/Matchups.csv
-```
-I defined those parameters in case someone wants to run the demo with different datasets, but with the same
-form.
-- `<prediction_dataset_path>` is a csv file where each row has the following form:
-```
-<weight_class>|<title_fight(true or false)>|<rounds(3 or 5)>|<fighter_1_id>|<fighter_2_id>
-```
-where fighters' ID should be taken from dataset given in the `-f` parameter.
-- Demo trains a `RandomForestClassifier` with 150 estimators and the dataset is converted to be a
-Double Difference dataset, because with these configurations I saw that out classifier gave the best
-results. For more details, check `Machine_Learning_Report.pdf`.
-- Note that because I could not take the gender of the fighters from their pages, I find initially
-using a library, which is prone to error. Thus, there is a case that a correct matchup will raise
-an error related to making matchup between fighters of different gender.
-
-## Notes
-
-- Data are in `./src/data` directory. 
-- Crawlers and further data configuration are in `./datasets` folder.
-- In order to get the latest datasets, run the `get_latest_datasets.sh` script. This will
-run the fights and fighters webpages crawlers, then configure those datasets and finally they
-will get moved into `src/data/` directory.
-- Match-ups should be created by hand in order to predict them.
+- For the Infrastructure check [docker/README.md](https://github.com/ManosL/UFC-MMA-Fight-Predictor/blob/master/docker/README.md).
+- In order to run the Machine Learning Experiments and Predictor(aka Demo) check [src/machine_learning/README.md](https://github.com/ManosL/UFC-MMA-Fight-Predictor/blob/master/src/machine_learning/README.md).
 
 ## Real-Time predictions
 
-At 05/02/2022, with the data that I could acquire until now, I tested my model in two upcoming events
-"UFC Fight Night: Hermansson vs. Strickland" and "UFC 271" in order to see how it will do on real-time.
-In order to do that I run the demo and wrote the appropriate Match-up dataset which is in `./src/data/Matchups.csv`
-file. The results were the following:
+At 05/02/2022, with the data that I could acquire until now, I tested my model in two upcoming events "UFC Fight Night: Hermansson vs. Strickland" and "UFC 271" in order to see how it will do on real-time. In order to do that I run the demo and wrote the appropriate Match-up dataset which is in `./src/data/Matchups.csv` file. The results were the following:
 
 #### UFC Fight Night: Hermansson vs. Strickland
 
@@ -174,9 +110,7 @@ Actual Winner: Phil Rowe
 Actual Winner: Malcolm Gordon
 ```
 
-This means that my predictor achieved approximately 76% accuracy on this event, by predicting
-correctly 10 out of 13 fights which is pretty good and probably its better than teh performance
-of a casual fan like me, who cannot even predict correctly fights between two relatively unknown fighters.
+This means that my predictor achieved approximately 76% accuracy on this event, by predicting correctly 10 out of 13 fights which is pretty good and probably its better than the performance of a casual fan like me, who cannot even predict correctly fights between two relatively unknown fighters.
 
 #### UFC 271
 
@@ -288,11 +222,8 @@ Actual Winner: Douglas Silva de Andrade
 Actual Winner: Jeremiah Wells
 ```
 
-This means that my predictor achieved approximately 57% accuracy on this event, by predicting
-correctly 8 out of 14 fights which is not so good, especially considering the performance on last event.
+This means that my predictor achieved approximately 57% accuracy on this event, by predicting correctly 8 out of 14 fights which is not so good, especially considering the performance on last event.
 
 This means that our model is generally unstable considering its real-time performance in these two events. However, it is consoling that in most of the wrong prediction our model selects as winner the favorite fighter, given the odds of a bookmaker.
 
-**DISCLAIMER**: This project was done for educational purposes ONLY and does not support any
-betting activity that will result in addiction and property losing. However, if you want to
-apply this model in the real world, I suggest use that in order to level up in [Verdict App](https://verdictmma.com/).
+**DISCLAIMER**: This project was done for educational purposes ONLY and does not support any betting activity that will result in addiction and property losing. However, if you want to apply this model in the real world, I suggest use that in order to level up in [Verdict App](https://verdictmma.com/).
