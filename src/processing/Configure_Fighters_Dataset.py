@@ -86,48 +86,48 @@ def convert_time_str_to_mins(elem):
 def find_genders(fights_df, fighters_df):
     d = gender.Detector()
 
-    first_names = fighters_df['Fighter Name'].apply(lambda x: x.split()[0])
-    genders = first_names.apply(lambda x: d.get_gender(x))
-
-    genders = genders.replace('mostly_male', 'male')
-    genders = genders.replace('mostly_female', 'female')
-    genders = list(genders)
-
-    # For andy or unknown gender fighters we will see what gender they are from their
-    # fight, because in there, this information is stored
     fighters_ids   = list(fighters_df['Fighter ID'])
     fighters_names = list(fighters_df['Fighter Name'])
+    genders = []
 
-    for i in range(len(genders)):
+    for i in range(len(fighters_ids)):
         fighter_id     = fighters_ids[i]
-        fighter_gender = genders[i]
-
-        if fighter_gender not in ['andy', 'unknown']:
-            continue
 
         fighters_fights_1 = fights_df[(fights_df['Fighter 1 ID'] == fighter_id)]
         fighters_fights_2 = fights_df[(fights_df['Fighter 2 ID'] == fighter_id)]
 
         # If the fighter did not fought previously we cannot determine its gender
+        # from his/her fights
         if len(fighters_fights_1) == 0 and len(fighters_fights_2) == 0:
-            # If the fighter does not have any fights, our last hope is the dictionary that I hardcoded
+            # If the fighter does not have any fights, use the detector
             fighter_name = fighters_names[i]
 
-            if fighter_name in full_names_to_gender.keys():
-                genders[i] = full_names_to_gender[fighter_name]
+            fighters_gender = d.get_gender(fighter_name.split()[0])
+
+            fighters_gender = "male" if fighters_gender in {"male", 'mostly_male'} else fighters_gender
+            fighters_gender = "female" if fighters_gender in {"female", 'mostly_female'} else fighters_gender
+
+            # If the detector cannot determine the gender, our last hope is to use the hard coded dict
+            if fighters_gender in {'andy', 'unknown'}:
+                if fighter_name in full_names_to_gender.keys():
+                    fighters_gender = full_names_to_gender[fighter_name]
+
+            genders.append(fighters_gender)
         else:
             if len(fighters_fights_1) > 0:
                 # A special case for catch weight fights because in this case
                 # the gender is not captured
                 if len(fighters_fights_1['Gender'].unique()) == 2:
-                    genders[i] = 'female'
+                    fighters_gender = 'female'
                 else:
-                    genders[i] = list(fighters_fights_1['Gender'])[0]
+                    fighters_gender = list(fighters_fights_1['Gender'])[0]
             else:
                 if len(fighters_fights_2['Gender'].unique()) == 2:
-                    genders[i] = 'female'
+                    fighters_gender = 'female'
                 else:
-                    genders[i] = list(fighters_fights_2['Gender'])[0]
+                    fighters_gender = list(fighters_fights_2['Gender'])[0]
+
+            genders.append(fighters_gender)
 
     genders = pd.Series(genders)
     ambiguous = fighters_df[genders.isin(['andy', 'unknown'])]['Fighter Name']
