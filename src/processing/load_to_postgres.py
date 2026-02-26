@@ -18,13 +18,11 @@ def main() -> int:
     files_to_load = [
                         'fight_new_actual_stats_processed.csv',
                         'fighters_new_current_stats_processed.csv',
-                        # 'fighter_stats_before_fight.csv'
                     ]
 
     tables_to_load_to = [
                             'new_fight_stats',
                             'new_fighters_current_stats',
-                            # 'raw_fighters_stats_before_fight'
                         ]
 
     for filename, table_name in zip(files_to_load, tables_to_load_to):

@@ -55,34 +55,6 @@ def convert_time_str_to_mins(elem):
 
 
 
-# def find_average_fight_time(fights_df, fighters_df):
-#     fighter_ids     = list(fighters_df['Fighter ID'])
-#     avg_fight_times = []
-
-#     for fighter_id in fighter_ids:
-#         fighters_fights_1 = fights_df[(fights_df['Fighter 1 ID'] == fighter_id)]
-#         fighters_fights_2 = fights_df[(fights_df['Fighter 2 ID'] == fighter_id)]
-
-#         curr_df = pd.concat([fighters_fights_1, fighters_fights_2], axis=0)
-
-#         fights_rounds_array = np.array(curr_df['Round'])
-
-#         last_round_dur       = curr_df['Time']
-#         last_round_dur_array = np.array(last_round_dur.apply(lambda x: convert_time_str_to_mins(x)))
-
-#         fights_duration_array = (fights_rounds_array - 1) * 5 + last_round_dur_array
-
-#         if len(fights_duration_array) == 0:
-#             avg_fight_times.append(0)
-#         else:
-#             avg_fight_times.append(fights_duration_array.mean())
-
-#     fighters_df.insert(5, 'Avg.Time(in Mins)', avg_fight_times)
-
-#     return fighters_df
-
-
-
 def find_genders(fights_df, fighters_df):
     d = gender.Detector()
 
@@ -200,7 +172,6 @@ def main():
     fights_df, fighters_df = retrieve_initial_dfs(fights_datafile_path, fighters_datafile_path)
     fighters_df = convert_no_stat_to_nan(fighters_df)
     fighters_df = convert_percentage_features_to_decimals(fighters_df)
-    # fighters_df = find_average_fight_time(fights_df, fighters_df)
     fighters_df = find_genders(fights_df, fighters_df)
 
     fighters_df['Height'] = fighters_df['Height'].apply(lambda x: convert_feet_and_inches_to_cm(x))

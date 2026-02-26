@@ -68,13 +68,6 @@ services:
       - scrapyd:/app/scrapyd
       - ../UFCStats_Crawlers:/app/scrapyd/project/UFCStats_Crawlers
       - ../UFCStats_Crawlers/requirements.txt:/requirements.txt
-    # command: >
-    #   bash -lc "
-    #     pip install -r /requirements.txt
-    #     && (cd /app/scrapyd/project/UFCStats_Crawlers && scrapyd-deploy --build-egg=UFCStats_Crawlers.egg)
-    #     && mkdir /app/scrapyd/eggs/UFCStats_Crawlers
-    #     && cp /app/scrapyd/project/UFCStats_Crawlers/UFCStats_Crawlers.egg /app/scrapyd/eggs/UFCStats_Crawlers
-    #   "
 
   processing-python:
     image: python:3.11-slim

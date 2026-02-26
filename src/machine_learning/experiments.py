@@ -33,7 +33,7 @@ from validate import evaluateClassifierProduction
 def prepare_best_classifiers_for_training():
     clf_refs = [LogisticRegression, KNeighborsClassifier, SVC, DecisionTreeClassifier,
                 RandomForestClassifier, AdaBoostClassifier]
-    
+
     logistic_regression_params = {
         'C': 1.0,
         'max_iter': 10000
@@ -70,7 +70,7 @@ def prepare_best_classifiers_for_training():
 def prepare_classifiers_for_training():
     clf_refs = [LogisticRegression, KNeighborsClassifier, SVC, DecisionTreeClassifier,
                 RandomForestClassifier, AdaBoostClassifier]
-    
+
     logistic_regression_params = {
         'C': [0.5, 1.0, 5.0, 10.0, 50.0, 100.0, 1000.0],
         'max_iter': [10000]
@@ -104,7 +104,7 @@ def prepare_classifiers_for_training():
 
 
 def main():
-    X, Y = read_fights_data('./data/Fights.csv')
+    X, Y = read_fights_data()
     X, Y = basic_preprocessing(X, Y)
     y    = Y['Result']
 
@@ -117,7 +117,7 @@ def main():
 
     print(X['Fighter_1_Stance'].unique())
     print('Columns of label dataframe:', Y.columns)
-    
+
     # Getting the other forms of the dataset that we will do
     # Dimensionality Reduction
     X_og,           y_og           = X, y
@@ -137,14 +137,14 @@ def main():
 
     # Getting ready to train and test
     train_X, train_y = pd.DataFrame(X), pd.Series(y)
-    
+
     # Evaluating each classifier with each hyperparameters
 
     clf_refs, clf_params_list = prepare_classifiers_for_training()
     evaluateClassifiersTraining(clf_refs, clf_params_list,
                             train_X, train_y, 6, 2,
                             after_split_preprocessing_fn=before_train_preprocessing)
- 
+
     # Evaluate the best of the best in different versions of the dataset
 
     best_clf_refs, best_clf_params = prepare_best_classifiers_for_training()

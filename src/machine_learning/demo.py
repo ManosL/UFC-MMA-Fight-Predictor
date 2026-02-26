@@ -218,8 +218,8 @@ def make_and_output_preds(model, matchups_df, names_df):
 
 def main(matchups_path):
     # Reading the necessary datasets
-    fights_df, fights_labels = read_fights_data('')
-    fighters_df              = read_fighters_data('')
+    fights_df, fights_labels = read_fights_data()
+    fighters_df              = read_fighters_data()
     matchups_df              = read_matchup_data(matchups_path)
 
     # Configuring matchups and get the names to a seperate dataframe

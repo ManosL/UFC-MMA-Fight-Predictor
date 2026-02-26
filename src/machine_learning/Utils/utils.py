@@ -20,7 +20,7 @@ def get_postgres_connection():
 # provide this util in case its needed
 
 # TODO: USE DECORATORS THAT INITIALIZES AND CLOSES THE CONNECTION
-def read_fighters_data(fighters_df_path):
+def read_fighters_data():
     postgres_connection = get_postgres_connection()
     query = "SELECT * FROM \"ML_Fighters\""
 
@@ -33,7 +33,7 @@ def read_fighters_data(fighters_df_path):
 # columns), thus this functtion will return 2 dataframes. One with the
 # "independent" columns and one with the labels
 
-def read_fights_data(fights_df_path):
+def read_fights_data():
     label_columns = ['Result', 'Method', 'Round', 'Time']
 
     postgres_connection = get_postgres_connection()
