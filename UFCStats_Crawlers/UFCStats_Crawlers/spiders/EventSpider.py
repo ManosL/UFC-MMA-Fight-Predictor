@@ -124,8 +124,6 @@ class EventSpider(scrapy.Spider):
 			elif result == 'NC':
 				result = 'no contest'
 			else:
-				f = open('mylog.txt','a')
-				f.write('found error ' + url + '\n')
 				result = 'error'
 
 		return result
