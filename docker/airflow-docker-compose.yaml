@@ -346,7 +346,6 @@ services:
 
 networks:
   default:
-    external: true
     name: ufc_infra_network
 
 volumes:

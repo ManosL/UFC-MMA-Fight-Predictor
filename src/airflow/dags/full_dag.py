@@ -17,11 +17,11 @@ from dag_parts.serving_views_creation import get_serving_views_creation_task_flo
 with DAG(
     dag_id="full_dag",
     params={
-        "is_incremental": Param(False, type="boolean"),
+        "is_incremental": Param(True, type="boolean"),
         "lookup_days": Param(15, type="integer")
     },
     start_date=datetime(2025, 1, 1),
-    schedule=None,
+    schedule="30 9 * * 1",
     catchup=False,
 ) as dag:
     with TaskGroup(group_id="crawl_data") as crawl_data_group:
