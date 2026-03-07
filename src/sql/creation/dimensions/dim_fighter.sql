@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS "DIM_Fighter" CASCADE;
 
 CREATE TABLE IF NOT EXISTS "DIM_Fighter" (
-    "DIM_Fighter_Key"                               SERIAL,
+    "DIM_Fighter_Key"                               SERIAL UNIQUE,
     "DIM_Fighter_ID"                                VARCHAR(50) NOT NULL,
     "DIM_Fighter_Name"                              VARCHAR(50) NOT NULL,
     "DIM_Fighter_Gender_Key"                        INTEGER NOT NULL,
@@ -28,5 +28,7 @@ CREATE TABLE IF NOT EXISTS "DIM_Fighter" (
     "__elt_loaded_at"                               TIMESTAMP WITH TIME ZONE DEFAULT (TIMEZONE('utc', NOW())),
 
     PRIMARY KEY("DIM_Fighter_ID", "DIM_Fighter_Effective_From",
-                "DIM_Fighter_Effective_Until")
+                "DIM_Fighter_Effective_Until"),
+    
+    FOREIGN KEY ("DIM_Fighter_Gender_Key") REFERENCES "DIM_Gender" ("DIM_Gender_Key")
 );

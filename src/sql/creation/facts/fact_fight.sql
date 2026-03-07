@@ -38,5 +38,14 @@ CREATE TABLE IF NOT EXISTS "FACT_Fight" (
     "FACT_Fight_Fighter_2_Submission_Attempts"         INTEGER,
     "FACT_Fight_Fighter_2_Rev"                         INTEGER,
     "FACT_Fight_Fighter_2_Control"                     VARCHAR(100),
-    "__elt_loaded_at"                                  TIMESTAMP WITH TIME ZONE DEFAULT (TIMEZONE('utc', NOW()))
+    "__elt_loaded_at"                                  TIMESTAMP WITH TIME ZONE DEFAULT (TIMEZONE('utc', NOW())),
+
+    FOREIGN KEY ("FACT_Fight_Date_Key") REFERENCES "DIM_Date" ("DIM_Date_Key"),
+    FOREIGN KEY ("FACT_Fight_Gender_Key") REFERENCES "DIM_Gender" ("DIM_Gender_Key"),
+    FOREIGN KEY ("FACT_Fight_Weight_Class_Key") REFERENCES "DIM_Weight_Class" ("DIM_Weight_Class_Key"),
+    FOREIGN KEY ("FACT_Fight_Result_Key") REFERENCES "DIM_Result" ("DIM_Result_Key"),
+    FOREIGN KEY ("FACT_Fight_Method_Key") REFERENCES "DIM_Method" ("DIM_Method_Key"),
+    FOREIGN KEY ("FACT_Fight_Fight_Time_Format_Key") REFERENCES "DIM_Fight_Time_Format" ("DIM_Fight_Time_Format_Key"),
+    FOREIGN KEY ("FACT_Fight_Fighter_1_Key") REFERENCES "DIM_Fighter" ("DIM_Fighter_Key"),
+    FOREIGN KEY ("FACT_Fight_Fighter_2_Key") REFERENCES "DIM_Fighter" ("DIM_Fighter_Key")
 );
