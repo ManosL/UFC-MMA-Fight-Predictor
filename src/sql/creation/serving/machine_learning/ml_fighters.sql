@@ -4,7 +4,7 @@ CREATE VIEW "ML_Fighters" AS
 SELECT
     "DIM_Fighter_ID" AS "Fighter ID",
     "DIM_Fighter_Name" AS "Fighter Name",
-    "DIM_Gender_Name" AS "Gender",
+    "DIM_Fighter_Gender_Name" AS "Gender",
     "DIM_Fighter_Wins" AS "Wins",
     "DIM_Fighter_Loses" AS "Loses",
     "DIM_Fighter_Draws" AS "Draws",
@@ -24,7 +24,5 @@ SELECT
     "DIM_Fighter_Submissions_Average_per_15_Mins" AS "Sub. Avg."
 FROM
     "DIM_Fighter"
-INNER JOIN "DIM_Gender"
-    ON "DIM_Fighter"."DIM_Fighter_Gender_Key" = "DIM_Gender"."DIM_Gender_Key"
 WHERE
     "DIM_Fighter_Effective_Until" = '9999-01-01'::DATE;
