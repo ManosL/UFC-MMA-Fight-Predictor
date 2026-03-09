@@ -62,7 +62,7 @@ def get_incr_warehouse_loading_task_flow() -> BaseOperator:
             task_id=f"load_dim_gender",
             conn_id="warehouse_db",
             sql=read_query_from_sql_file(
-                os.path.join(PATH_TO_DB_TABLES_FULL_LOADING_SCRIPTS,
+                os.path.join(PATH_TO_DB_TABLES_INCR_LOADING_SCRIPTS,
                              "dimensions", f"dim_gender.sql")
             )
         ) >>
