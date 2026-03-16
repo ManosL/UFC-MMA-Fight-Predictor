@@ -56,6 +56,12 @@ SELECT
     dim_fighter_2."DIM_Fighter_Submissions_Average_per_15_Mins" AS "Fighter_2_Sub_Avgp15M"
 FROM
     "FACT_Fight" fact_fight
+    INNER JOIN "FACT_Fight_Fighter_Stats" fact_fight_fighter_stats_1
+        ON fact_fight."FACT_Fight_Key" = fact_fight_fighter_stats_1."FACT_Fight_Fighter_Stats_Fight_Key"
+        AND fact_fight_fighter_stats_1."FACT_Fight_Fighter_Stats_Fighter_Corner" = 1
+    INNER JOIN "FACT_Fight_Fighter_Stats" fact_fight_fighter_stats_2
+        ON fact_fight."FACT_Fight_Key" = fact_fight_fighter_stats_2."FACT_Fight_Fighter_Stats_Fight_Key"
+        AND fact_fight_fighter_stats_2."FACT_Fight_Fighter_Stats_Fighter_Corner" = 2
     INNER JOIN "DIM_Date" dim_date
         ON fact_fight."FACT_Fight_Date_Key" = dim_date."DIM_Date_Key"
     INNER JOIN "DIM_Gender" dim_gender
@@ -63,12 +69,12 @@ FROM
     INNER JOIN "DIM_Weight_Class" dim_weight_class
         ON fact_fight."FACT_Fight_Weight_Class_Key" = dim_weight_class."DIM_Weight_Class_Key"
     INNER JOIN "DIM_Result" dim_result
-        ON fact_fight."FACT_Fight_Result_Key" = dim_result."DIM_Result_Key"
+        ON fact_fight_fighter_stats_1."FACT_Fight_Fighter_Stats_Result_Key" = dim_result."DIM_Result_Key"
     INNER JOIN "DIM_Method" dim_method
         ON fact_fight."FACT_Fight_Method_Key" = dim_method."DIM_Method_Key"
     INNER JOIN "DIM_Fight_Time_Format" dim_fight_time_format
         ON fact_fight."FACT_Fight_Fight_Time_Format_Key" = dim_fight_time_format."DIM_Fight_Time_Format_Key"
     INNER JOIN "DIM_Fighter" dim_fighter_1
-        ON fact_fight."FACT_Fight_Fighter_1_Key" = dim_fighter_1."DIM_Fighter_Key"
+        ON fact_fight_fighter_stats_1."FACT_Fight_Fighter_Stats_Fighter_Key" = dim_fighter_1."DIM_Fighter_Key"
     INNER JOIN "DIM_Fighter" dim_fighter_2
-        ON fact_fight."FACT_Fight_Fighter_2_Key" = dim_fighter_2."DIM_Fighter_Key";
+        ON fact_fight_fighter_stats_2."FACT_Fight_Fighter_Stats_Fighter_Key" = dim_fighter_2."DIM_Fighter_Key";

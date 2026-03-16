@@ -22,6 +22,7 @@ ON
     )
 WHEN NOT MATCHED THEN
     INSERT (
+        "Fight_ID",
         "Date",
         "Gender",
         "Weight_Class",
@@ -64,6 +65,7 @@ WHEN NOT MATCHED THEN
         "Duration_Mins"
     )
     VALUES (
+        new_fight_stats."Fight_ID",
         new_fight_stats."Date",
         new_fight_stats."Gender",
         new_fight_stats."Weight_Class",

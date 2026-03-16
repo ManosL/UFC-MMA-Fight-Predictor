@@ -1,0 +1,38 @@
+DROP TABLE IF EXISTS "FACT_Fight_Fighter_Stats" CASCADE;
+
+CREATE TABLE IF NOT EXISTS "FACT_Fight_Fighter_Stats" (
+    "FACT_Fight_Fighter_Stats_Key"                                       SERIAL PRIMARY KEY,
+    "FACT_Fight_Fighter_Stats_Fight_Key"                                 INTEGER,
+    "FACT_Fight_Fighter_Stats_Result_Key"                                INTEGER,
+    "FACT_Fight_Fighter_Stats_Fighter_Key"                               INTEGER,
+    "FACT_Fight_Fighter_Stats_Fighter_Corner"                            INTEGER,
+    "FACT_Fight_Fighter_Stats_Knock_Downs"                               INTEGER,
+    "FACT_Fight_Fighter_Stats_Sign.Strikes_Done"                         INTEGER,
+    "FACT_Fight_Fighter_Stats_Sign.Strikes_Attempted"                    INTEGER,
+    "FACT_Fight_Fighter_Stats_Sign.Strikes_Perc."                        VARCHAR(100),
+    "FACT_Fight_Fighter_Stats_Total_Strikes_Done"                        INTEGER,
+    "FACT_Fight_Fighter_Stats_Total_Strikes_Attempted"                   INTEGER,
+    "FACT_Fight_Fighter_Stats_Takedowns_Done"                            INTEGER,
+    "FACT_Fight_Fighter_Stats_Takedowns_Attempted"                       INTEGER,
+    "FACT_Fight_Fighter_Stats_Takedowns_Perc."                           VARCHAR(100),
+    "FACT_Fight_Fighter_Stats_Submission_Attempts"                       INTEGER,
+    "FACT_Fight_Fighter_Stats_Rev"                                       INTEGER,
+    "FACT_Fight_Fighter_Stats_Control"                                   VARCHAR(100),
+    "FACT_Fight_Fighter_Stats_Opponent_Knock_Downs"                      INTEGER,
+    "FACT_Fight_Fighter_Stats_Opponent_Sign.Strikes_Done"                INTEGER,
+    "FACT_Fight_Fighter_Stats_Opponent_Sign.Strikes_Attempted"           INTEGER,
+    "FACT_Fight_Fighter_Stats_Opponent_Sign.Strikes_Perc."               VARCHAR(100),
+    "FACT_Fight_Fighter_Stats_Opponent_Total_Strikes_Done"               INTEGER,
+    "FACT_Fight_Fighter_Stats_Opponent_Total_Strikes_Attempted"          INTEGER,
+    "FACT_Fight_Fighter_Stats_Opponent_Takedowns_Done"                   INTEGER,
+    "FACT_Fight_Fighter_Stats_Opponent_Takedowns_Attempted"              INTEGER,
+    "FACT_Fight_Fighter_Stats_Opponent_Takedowns_Perc."                  VARCHAR(100),
+    "FACT_Fight_Fighter_Stats_Opponent_Submission_Attempts"              INTEGER,
+    "FACT_Fight_Fighter_Stats_Opponent_Rev"                              INTEGER,
+    "FACT_Fight_Fighter_Stats_Opponent_Control"                          VARCHAR(100),
+    "__elt_loaded_at"                                                    TIMESTAMP WITH TIME ZONE DEFAULT (TIMEZONE('utc', NOW())),
+
+    FOREIGN KEY ("FACT_Fight_Fighter_Stats_Fight_Key") REFERENCES "FACT_Fight" ("FACT_Fight_Key"),
+    FOREIGN KEY ("FACT_Fight_Fighter_Stats_Result_Key") REFERENCES "DIM_Result" ("DIM_Result_Key"),
+    FOREIGN KEY ("FACT_Fight_Fighter_Stats_Fighter_Key") REFERENCES "DIM_Fighter" ("DIM_Fighter_Key")
+);

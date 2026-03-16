@@ -25,7 +25,7 @@ def get_incr_warehouse_loading_task_flow() -> BaseOperator:
     raw_tables = ["raw_fight_stats", "raw_fighters_current_stats"]
     dim_tables = ["dim_fight_time_format", "dim_gender", # "dim_fighter", "dim_date", 
                   "dim_method", "dim_result", "dim_weight_class"]
-    fact_tables = [] # "fact_fight"]
+    fact_tables = [] # "fact_fight", "fact_fight_fighter_stats"]
 
     dummy_raw_loading_task = EmptyOperator(task_id="finalize_raw_loading")
     dummy_dim_loading_task = EmptyOperator(task_id="finalize_dim_loading")
@@ -105,6 +105,21 @@ def get_incr_warehouse_loading_task_flow() -> BaseOperator:
             sql=read_query_from_sql_file(
                 os.path.join(PATH_TO_DB_TABLES_FULL_LOADING_SCRIPTS,
                              "facts", f"fact_fight.sql")
+            )
+        ) >> SQLExecuteQueryOperator(
+            task_id=f"create_fact_fight_fighter_stats",
+            conn_id="warehouse_db",
+            sql=read_query_from_sql_file(
+                os.path.join(PATH_TO_DB_TABLES_CREATION_SCRIPTS,
+                             "facts", f"fact_fight_fighter_stats.sql")
+            )
+        ) >>
+        SQLExecuteQueryOperator(
+            task_id=f"load_fact_fight_fighter_stats",
+            conn_id="warehouse_db",
+            sql=read_query_from_sql_file(
+                os.path.join(PATH_TO_DB_TABLES_FULL_LOADING_SCRIPTS,
+                             "facts", f"fact_fight_fighter_stats.sql")
             )
         )
     )

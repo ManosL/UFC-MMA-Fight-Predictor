@@ -6,8 +6,8 @@ from utils import get_minio_client, read_csv_from_minio_to_pandas
 from utils import write_pandas_csv_to_minio
 
 
-event_df_common_columns  = ['Fight Date', 'Gender', 'Weight Class', 'Title Fight',
-                            'Result', 'Method', 'Round', 'Time',
+event_df_common_columns  = ['Fight_ID', 'Fight Date', 'Gender', 'Weight Class', 
+                            'Title Fight', 'Result', 'Method', 'Round', 'Time',
                             'Fight Time Format']
 
 event_df_fighter_columns = ['ID', 'Name', 'Nickname', 'Knock Downs', 'Sign.Strikes Done',
@@ -60,9 +60,6 @@ def clean_and_preprocess_initial_dfs(init_event_df):
     )
 
     event_df_common_columns.append('Duration_Mins')
-
-    init_event_df.insert(0, 'Fight_ID', range(1,len(init_event_df) + 1))
-    event_df_common_columns.insert(0, 'Fight_ID')
 
     init_event_df = init_event_df.replace('No Stats', np.nan)
     init_event_df = init_event_df.replace('--', np.nan)

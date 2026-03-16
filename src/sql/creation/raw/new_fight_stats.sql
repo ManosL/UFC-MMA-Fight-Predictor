@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS new_fight_stats CASCADE;
 
 CREATE TABLE new_fight_stats(
-    "Fight_ID"                              INTEGER,
+    "Fight_ID"                              VARCHAR(50),
     "Date"                                  DATE,
     "Gender"                                VARCHAR(10),
     "Weight_Class"                          VARCHAR(100),

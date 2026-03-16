@@ -63,7 +63,7 @@ class UFCFightStatsCrawlersPipeline:
         else:
             print(f'Minio Bucket {self.bucket_name} already exists.')
 
-        common_columns = ['Fight Date', 'Gender', 'Weight Class', 'Title Fight',
+        common_columns = ['Fight_ID', 'Fight Date', 'Gender', 'Weight Class', 'Title Fight',
                           'Result', 'Method', 'Round', 'Time', 'Fight Time Format']
 
         fighter_1_prefix = 'Fighter 1 '

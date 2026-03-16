@@ -1,7 +1,7 @@
 DROP TABLE IF EXISTS raw_fight_stats CASCADE;
 
 CREATE TABLE raw_fight_stats(
-    "Fight_ID"                              SERIAL,
+    "Fight_ID"                              VARCHAR(50),
     "Date"                                  DATE,
     "Gender"                                VARCHAR(10),
     "Weight_Class"                          VARCHAR(100),

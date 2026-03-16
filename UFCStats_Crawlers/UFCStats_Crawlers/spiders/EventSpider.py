@@ -70,6 +70,13 @@ class EventSpider(scrapy.Spider):
 		return id.strip()
 
 
+	def get_fight_id_from_url(self, url):
+		id = re.match(r'^.*ufcstats.com/fight-details/([a-zA-Z0-9]*)(\/|\?)?.*$', url).groups()[0]
+		assert(id != None)
+
+		return id.strip()
+
+
 	def get_fighter_id_name_and_nickname(self, fighter_html):
 		fighter_id = fighter_html.css('''div.b-fight-details__person-text
 									h3.b-fight-details__person-name
@@ -136,7 +143,7 @@ class EventSpider(scrapy.Spider):
 		self.logger.debug(f'Will spider run incrementally: {bool(self.is_incremental)}')
 		self.logger.debug(f'Lookup days are: {int(self.lookup_days)} days')
 
-		common_columns = ['Fight Date', 'Gender', 'Weight Class', 'Title Fight',
+		common_columns = ['Fight_ID', 'Fight Date', 'Gender', 'Weight Class', 'Title Fight',
 						  'Result', 'Method', 'Round', 'Time', 'Fight Time Format']
 
 		fighter_1_prefix = 'Fighter 1 '
@@ -200,7 +207,10 @@ class EventSpider(scrapy.Spider):
 
 		for link in rows:
 			yield scrapy.Request(url = link, callback=self.fight_parse,
-								meta={'event_date': response.meta.get('event_date')})
+								meta={
+									'event_date': response.meta.get('event_date'),
+									'fight_id': self.get_fight_id_from_url(link)
+								})
 
 
 	def fight_parse(self,response):
@@ -226,11 +236,12 @@ class EventSpider(scrapy.Spider):
 								i.b-fight-details__fight-title'''
 
 		bout_desc = response.css(bout_desc_selector).get()
-
+		
+		fight_id = response.meta.get('fight_id')
 		event_date = response.meta.get('event_date')
 		gender, title_fight, weight_class = self.process_bout_description(bout_desc)
 
-		fight_info = [event_date, gender, weight_class, title_fight]
+		fight_info = [fight_id, event_date, gender, weight_class, title_fight]
 
 		fighters = response.css('div.b-fight-details__persons.clearfix')
 		fighters = fighters.css('div.b-fight-details__person')
