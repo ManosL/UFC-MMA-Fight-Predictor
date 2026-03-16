@@ -75,7 +75,7 @@ corner_2 AS (
     SELECT
         fact_fight."FACT_Fight_Key" AS "FACT_Fight_Fighter_Stats_Fight_Key",
         dim_result."DIM_Result_Key" AS "FACT_Fight_Fighter_Stats_Result_Key",
-        dim_fighter_1."DIM_Fighter_Key" AS "FACT_Fight_Fighter_Stats_Fighter_Key",
+        dim_fighter_2."DIM_Fighter_Key" AS "FACT_Fight_Fighter_Stats_Fighter_Key",
         2 AS "FACT_Fight_Fighter_Stats_Fighter_Corner",
         raw_fight_stats."Fighter_2_Knock_Downs" AS "FACT_Fight_Fighter_Stats_Knock_Downs",
         raw_fight_stats."Fighter_2_Sign.Strikes_Done" AS "FACT_Fight_Fighter_Stats_Sign.Strikes_Done",
