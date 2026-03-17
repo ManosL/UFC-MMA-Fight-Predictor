@@ -360,4 +360,9 @@ full_names_to_gender = {
     'Gugun Gusman': 'male',
     'Rainn Guerrero': 'male',
     'Eperaim Ginting': 'male',
+    "Tofiq Musayev": 'male',
+    "Yi Sak Lee": "male",
+    "Regina Tarin": "female",
+    "Lance Gibson Jr.": "male",
+    "Gokhan Saricam": "male",
 }

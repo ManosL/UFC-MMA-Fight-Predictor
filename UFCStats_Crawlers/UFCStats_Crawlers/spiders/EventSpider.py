@@ -11,6 +11,8 @@ from utils import log_path_to_scrapyd_url, get_minio_client
 from utils import create_minio_bucket, write_json_to_minio
 
 
+CATCHWEIGHT_CLASS_NAME = 'catch weight'
+
 # these weight classes are taken from https://en.wikipedia.org/wiki/Mixed_martial_arts_weight_classes
 mma_weight_classes = ['atomweight', 'strawweight', 'flyweight', 'bantamweight', 'featherweight', 'lightweight',
 					'super lightweight', 'welterweight', 'super welterweight', 'middleweight', 'super middleweight',
@@ -41,7 +43,7 @@ class EventSpider(scrapy.Spider):
 		bout_desc = re.match(r'<i.*>(?:.*<img.*>)?(.*)</i>', bout_desc, flags=re.DOTALL).groups()[0]
 		bout_desc = bout_desc.strip()
 
-		fight_weight_class = 'catch weight'
+		fight_weight_class = CATCHWEIGHT_CLASS_NAME
 
 		# Searching the weight class in the description according to known MMA weight classes
 		for weight_class in mma_weight_classes:
@@ -56,6 +58,8 @@ class EventSpider(scrapy.Spider):
 
 		if re.search('Women', bout_desc, flags=re.IGNORECASE):
 			gender = 'female'
+		elif fight_weight_class == CATCHWEIGHT_CLASS_NAME:
+			gender = 'unknown'
 		else:
 			gender = 'male'
 

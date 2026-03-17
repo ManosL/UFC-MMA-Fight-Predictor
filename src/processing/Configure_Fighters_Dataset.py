@@ -18,6 +18,8 @@ def retrieve_initial_dfs(event_df_file_name, fighters_df_file_name):
     init_event_df = read_csv_from_minio_to_pandas(minio_client, bucket_name,
                                                   event_df_file_name, sep='|',
                                                   header=0)
+    
+    init_event_df['Fight Date'] = pd.to_datetime(init_event_df['Fight Date'])
 
     fighters_df = read_csv_from_minio_to_pandas(minio_client, bucket_name,
                                                 fighters_df_file_name,
@@ -83,21 +85,27 @@ def find_genders(fights_df, fighters_df):
             if fighters_gender in {'andy', 'unknown'}:
                 if fighter_name in full_names_to_gender.keys():
                     fighters_gender = full_names_to_gender[fighter_name]
+                else:
+                    fighters_gender = 'unknown'
 
             genders.append(fighters_gender)
         else:
-            if len(fighters_fights_1) > 0:
-                # A special case for catch weight fights because in this case
-                # the gender is not captured
-                if len(fighters_fights_1['Gender'].unique()) == 2:
-                    fighters_gender = 'female'
-                else:
-                    fighters_gender = list(fighters_fights_1['Gender'])[0]
+            mask = (fights_df['Fighter 1 ID'] == fighter_id) | (fights_df['Fighter 2 ID'] == fighter_id)
+            min_fight_date = fights_df[mask]["Fight Date"].min()
+
+            if min_fight_date < pd.to_datetime('2013-02-23'):
+                fighters_gender = 'male'
             else:
-                if len(fighters_fights_2['Gender'].unique()) == 2:
-                    fighters_gender = 'female'
-                else:
-                    fighters_gender = list(fighters_fights_2['Gender'])[0]
+                fighters_gender = fighters_fights_1[fighters_fights_1['Gender'] != 'unknown']['Gender'].mode()
+
+                if fighters_gender.empty:
+                    fighters_gender = fighters_fights_2[fighters_fights_2['Gender'] != 'unknown']['Gender'].mode()
+
+                fighters_gender = 'unknown' if fighters_gender.empty else fighters_gender.iloc[0]
+
+                if fighters_gender == 'unknown':
+                    if fighters_names[i] in full_names_to_gender.keys():
+                        fighters_gender = full_names_to_gender[fighters_names[i]]
 
             genders.append(fighters_gender)
 

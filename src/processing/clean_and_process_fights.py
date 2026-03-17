@@ -44,6 +44,30 @@ def retrieve_initial_dfs(event_df_file_name):
 def clean_and_preprocess_initial_dfs(init_event_df):
     init_event_df['Fight Date'] = pd.to_datetime(init_event_df['Fight Date'])
 
+    # Women first fought in UFC before 2013-02-23, thus, with this info we can 
+    # derive some unknown genders
+    mask = (init_event_df['Fight Date'] < pd.to_datetime('2013-02-23')) & (init_event_df['Gender'] == 'unknown')
+    init_event_df[mask]['Gender'] = 'male'
+
+    # Fix "unknown" gender due to catch weight bouts by checking the gender from another fight
+    known = init_event_df[init_event_df['Gender'] != 'unknown']
+
+    id_gender_1 = known[['Fighter 1 ID', 'Gender']].rename(columns={'Fighter 1 ID': 'fighter_id'})
+    id_gender_2 = known[['Fighter 2 ID', 'Gender']].rename(columns={'Fighter 2 ID': 'fighter_id'})
+
+    id_gender = pd.concat([id_gender_1, id_gender_2], ignore_index=True)
+
+    # choose the most common known gender per fighter_id
+    gender_map = id_gender.groupby('fighter_id')['Gender'].agg(lambda x: x.mode().iloc[0])
+
+    fill_1 = init_event_df['Fighter 1 ID'].map(gender_map)
+    fill_2 = init_event_df['Fighter 2 ID'].map(gender_map)
+
+    init_event_df['Gender'] = init_event_df['Gender'].mask(
+        init_event_df['Gender'].eq('unknown'),
+        fill_1.combine_first(fill_2)
+    ).fillna('unknown')
+
     # I will only keep the matches that are 3 or 5 rounds of 5 minutes because fighters
     # of other fight formats had probably retired and because the requirements to win
     # might be different because at that times the rules were another for example.
