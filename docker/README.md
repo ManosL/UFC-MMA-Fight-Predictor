@@ -6,8 +6,9 @@ In this README, I will provide the necessary instructions to setup the infrastru
 
 ## Requirements
 
-- 8GB of RAM
+- At least 10-12 GB of RAM
 - Docker installed in your system
+- PowerBI Desktop
 
 ## Spin Up the Docker Infrastructure
 
@@ -28,13 +29,16 @@ docker compose -f docker-compose.yml -f airflow-docker-compose.yaml up -d
     - Scrapyd Server which spins up Scrapyd and ScrapydWeb
     - Python (one for data processing, one for Machine Learning)
     - MLflow
-- You can access various apps from browser, through their corresponding UIs from the following URLs:
-    - Airflow: [localhost:8080]
-    - PgAdmin: [localhost:80]
-    - Minio: [localhost:9000]
-    - Scrapyd: [localhost:6800]
-    - ScrapydWeb: [localhost:5000]
-    - MLflow: [localhost:5100]
+- You can access various apps from browser, through their corresponding UIs by accessing the following URLs and providing the creedentials as shown in the below table:
+
+| Service Name  | URL                               | Username Env Variable         | Password Env Variable         |
+|---------------|-----------------------------------|-------------------------------|-------------------------------|
+| Airflow       | [localhost:8080](localhost:8080)  | `_AIRFLOW_WWW_USER_USERNAME`  | `_AIRFLOW_WWW_USER_PASSWORD`  |
+| PgAdmin       | [localhost:80](localhost:80)      | `PGADMIN_EMAIL`               |  `PGADMIN_PASSWORD`           |
+| MinIO         | [localhost:9000](localhost:9000)  | `MINIO_USERNAME`              | `MINIO_PASSWORD`              |
+| Scrapyd       | [localhost:6800](localhost:6800)  | `SCRAPYD_USERNAME`            | `SCRAPYD_PASSWORD`            |
+| ScrapydWeb    | [localhost:5000](localhost:5000)  | `SCRAPYD_USERNAME`            | `SCRAPYD_PASSWORD`            |
+| MLflow        | [localhost:5100](localhost:5100)  | `MLFLOW_POSTGRES_USERNAME`    | `MLFLOW_POSTGRES_PASSWORD`    |
 
 ## Deploy the Spiders to Scrapyd
 
