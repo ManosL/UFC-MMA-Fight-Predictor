@@ -42,7 +42,9 @@ The below image contains the Data Model for our warehouse:
 Following Kimball dimensional modeling approach to create the Data Model, we have the following:
 
 **Business Process**: A UFC Fight that happens on a specific Date between 2 fighters.
+
 **Granularity**: One row per fight that will contain general fight's stats and one row per fight and fighter that will contain fighter's performance in the fight.
+
 **Dimensions**: I created the following Dimension Tables:
 - **Result**: The result of the fight(win, lose, draw). In the Fact table this value is based on Fighter's 1 POV.
 - **Weight Class**: The weight class of the fight
@@ -51,6 +53,7 @@ Following Kimball dimensional modeling approach to create the Data Model, we hav
 - **Method**: Finish method like Submission, TKO etc.
 - **Gender**: The Gender of the fighters involved in the fight
 - **Fighter**: This dimension contains the Fighter's stats before the fight. Because fighter statistics evolve over time, this dimension table is implemented as a Type-2 Slowly Changing Dimension(SCD2).
+
 **Facts**: I have the two fact tables that are connected with each other because they represent a hierarchy. The reason for this kind of modeling, was because Fighter was a role-playing dimension and this was making stuff in Power BI a lot harder. The fact tables are the following:
 - **Fight**: this is a Transactional Fact Table that contains general information and stats of the fight like duration and links with all the aforementioned dimensions, except result because this is stored in the POV of the given fighter, which is why this dimension is linked with the next fact table.
 - **Fight_Fighter_Stats**: this is a Transactional Fact Table that contains stats of the fight per fighter like "Significant Strikes Landed" and is linked with the result of the fight(**Result**) dimension.
@@ -109,7 +112,7 @@ This workflow currently just creates the necessary views that the Machine Learni
 
 In order to demonstrate a proper usage of my data model-until I build the ML Pipeline-, I decided to build a report with various dashboards. The following dashboards demonstrate how the warehouse can be used to generate insights on fight outcomes and fighter performance.
 
-## Overview Page
+### Overview Page
 
 ![Overview Report Page](images/reporting/overview.png)
 
@@ -119,13 +122,13 @@ In this page, I demonstrate some simple KPIs and stats like total number of UFC 
 - If you switch the gender, you can see that 54% of men's fights end in a finish while for women only 36% of their fights ends in a finishing way.
 - Men's Lightweight and Welterweight are the ones with the most fights.
 
-## Fighter's Performance Page
+### Fighter's Performance Page
 
 ![Fighter's Performance Report Page](images/reporting/fighter_performance_analysis.png)
 
 In this page, I demonstrate some stats for the selected fighter, like their Win-Lose-Draw-No Contest record in general and per weight class the fought, how their wins and losses came, their Average Fight Duration in Minutes, their activity level through the years and their win and loss rate through the years.
 
-## Method of Victory Page
+### Method of Victory Page
 
 ![Method of Victory Report Page](images/reporting/finishing_method_analysis.png)
 
