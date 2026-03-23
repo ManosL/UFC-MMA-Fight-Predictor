@@ -192,15 +192,18 @@ def get_incremental_crawl_task_flow() -> BaseOperator:
     crawl_fighters_task >> validate_fighters_crawl_task >>end_task
     return start_task
 
-def get_crawling_task_flow() -> BaseOperator:
+def get_crawling_task_flow(
+        incremental_start_task_id="crawl_data.incremental_crawl_start",
+        full_start_task_id="crawl_data.full_crawl_start"
+) -> BaseOperator:
     circuit_operator = \
     BranchPythonOperator(
         task_id="check_if_incremental_run",
         python_callable=check_if_incremental_or_full_load_run,
         op_kwargs={
             "is_incremental": "{{ params.is_incremental }}",
-            "incr_task_id": "crawl_data.incremental_crawl_start",
-            "full_task_id": "crawl_data.full_crawl_start"
+            "incr_task_id": incremental_start_task_id,
+            "full_task_id": full_start_task_id
         }
     )
 

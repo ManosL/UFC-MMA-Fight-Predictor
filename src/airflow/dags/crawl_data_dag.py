@@ -14,4 +14,7 @@ with DAG(
     schedule=None,
     catchup=False,
 ) as dag:
-    get_crawling_task_flow()
+    get_crawling_task_flow(
+        incremental_start_task_id="incremental_crawl_start",
+        full_start_task_id="full_crawl_start"
+    )
