@@ -68,6 +68,7 @@ services:
       - scrapyd:/app/scrapyd
       - ../UFCStats_Crawlers:/app/scrapyd/project/UFCStats_Crawlers
       - ../UFCStats_Crawlers/requirements.txt:/requirements.txt
+      - ../src/common:/app/common
 
   processing-python:
     image: python:3.11-slim

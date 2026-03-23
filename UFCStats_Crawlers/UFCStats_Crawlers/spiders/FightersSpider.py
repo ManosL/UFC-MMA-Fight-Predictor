@@ -6,13 +6,14 @@ import pandas as pd
 import string
 import scrapy
 import re
-from minio import Minio
-from io import BytesIO
 
+# TODO: SEE HOW TO REMOVE THE sys.path.append calls
 sys.path.append("/app/scrapyd/project/UFCStats_Crawlers/UFCStats_Crawlers/spiders")
+sys.path.append("/app/common")
 
-from utils import log_path_to_scrapyd_url, get_minio_client
-from utils import create_minio_bucket, write_json_to_minio
+from minio_utils import MinioClient
+
+from utils import log_path_to_scrapyd_url
 
 
 class FightersSpider(scrapy.Spider):
@@ -43,22 +44,19 @@ class FightersSpider(scrapy.Spider):
                     'Str. Def.', 'TD Avg.', 'TD Acc.', 'TD Def.', 'Sub. Avg.']
 
         if self.is_incremental:
-            minio_client = Minio(
+            minio_client = MinioClient(
                 'minio:9000',
                 access_key=os.environ.get('MINIO_USERNAME'),
                 secret_key=os.environ.get('MINIO_PASSWORD'),
                 secure=False
             )
 
-            response = minio_client.get_object(
+            event_data = minio_client.read_csv_to_pandas(
                 os.environ.get("MINIO_RAW_DATA_BUCKET_NAME"),
-                "fight_new_actual_stats.csv"
+                "fight_new_actual_stats.csv",
+                sep='|', 
+                header=0
             )
-
-            event_data = pd.read_csv(BytesIO(response.read()), sep='|', header=0)
-
-            response.close()
-            response.release_conn()
 
             all_fighter_ids = set(event_data['Fighter 1 ID']).union(set(event_data['Fighter 2 ID']))
             self.logger.debug(f"Will crawl info for the following Fighter IDs: {all_fighter_ids}")
@@ -166,7 +164,13 @@ class FightersSpider(scrapy.Spider):
 
 
     def closed(self, reason):
-        minio_client = get_minio_client()
+        minio_client = MinioClient(
+            'minio:9000',
+            access_key=os.environ.get('MINIO_USERNAME'),
+            secret_key=os.environ.get('MINIO_PASSWORD'),
+            secure=False
+        )
+
         log_file_url = log_path_to_scrapyd_url(self.settings["LOG_FILE"])
 
         self.crawler.stats.set_value("spider_name", self.name)
@@ -176,13 +180,12 @@ class FightersSpider(scrapy.Spider):
 
         bucket_name = os.environ.get('MINIO_FIGHTER_CRAWL_LOGS_BUCKET_NAME')
 
-        self.logger.info(create_minio_bucket(minio_client, bucket_name))
+        self.logger.info(minio_client.create_bucket(bucket_name))
 
         crawl_stats = deepcopy(self.crawler.stats.get_stats())
         crawl_stats["start_time"] = str(crawl_stats["start_time"])
 
-        write_json_to_minio(
-            minio_client,
+        minio_client.write_json(
             bucket_name,
             stats_file_name,
             crawl_stats

@@ -6,9 +6,11 @@ import re
 import os
 
 sys.path.append("/app/scrapyd/project/UFCStats_Crawlers/UFCStats_Crawlers/spiders")
+sys.path.append("/app/common")
 
-from utils import log_path_to_scrapyd_url, get_minio_client
-from utils import create_minio_bucket, write_json_to_minio
+from minio_utils import MinioClient
+
+from utils import log_path_to_scrapyd_url
 
 
 CATCHWEIGHT_CLASS_NAME = 'catch weight'
@@ -326,7 +328,13 @@ class EventSpider(scrapy.Spider):
 
 
 	def closed(self, reason):
-		minio_client = get_minio_client()
+		minio_client = MinioClient(
+            'minio:9000',
+            access_key=os.environ.get('MINIO_USERNAME'),
+            secret_key=os.environ.get('MINIO_PASSWORD'),
+            secure=False
+        )
+
 		log_file_url = log_path_to_scrapyd_url(self.settings["LOG_FILE"])
 
 		self.crawler.stats.set_value("spider_name", self.name)
@@ -336,13 +344,12 @@ class EventSpider(scrapy.Spider):
 
 		bucket_name = os.environ.get('MINIO_EVENT_CRAWL_LOGS_BUCKET_NAME')
 
-		self.logger.info(create_minio_bucket(minio_client, bucket_name))
+		self.logger.info(minio_client.create_bucket(bucket_name))
 
 		crawl_stats = deepcopy(self.crawler.stats.get_stats())
 		crawl_stats["start_time"] = str(crawl_stats["start_time"])
 
-		write_json_to_minio(
-			minio_client,
+		minio_client.write_json(
 			bucket_name,
 			stats_file_name,
 			crawl_stats

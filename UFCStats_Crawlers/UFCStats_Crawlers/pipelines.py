@@ -17,29 +17,14 @@
 
 import csv
 import os
-from itemadapter import ItemAdapter
-from scrapy.exceptions import DropItem
+import sys
 
-from minio import Minio
+sys.path.append("/app/scrapyd/project/UFCStats_Crawlers/UFCStats_Crawlers/spiders")
+sys.path.append("/app/common")
+
+from minio_utils import MinioClient
 
 DESTINATION_DIR = '/tmp'
-
-class AddNullPipeline:
-    def open_spider(self, spider):
-        return
-
-
-
-    def process_item(self, item, spider):
-        item_id = item['id']
-
-        if (item_id in self.ids_seen):
-            raise DropItem(f"Item ID already seen: {item_id}")
-
-        self.ids_seen.add(item_id)
-
-        return item
-
 
 
 class UFCFightStatsCrawlersPipeline:
@@ -47,7 +32,7 @@ class UFCFightStatsCrawlersPipeline:
         if not os.path.exists(DESTINATION_DIR):
             os.mkdir(DESTINATION_DIR)
 
-        self.minio_client = Minio(
+        self.minio_client = MinioClient(
             'minio:9000',
             access_key=os.environ.get('MINIO_USERNAME'),
             secret_key=os.environ.get('MINIO_PASSWORD'),
@@ -56,12 +41,7 @@ class UFCFightStatsCrawlersPipeline:
 
         self.bucket_name = os.environ.get('MINIO_RAW_DATA_BUCKET_NAME')
 
-        bucket_exists = self.minio_client.bucket_exists(self.bucket_name)
-
-        if not bucket_exists:
-            self.minio_client.make_bucket(self.bucket_name)
-        else:
-            print(f'Minio Bucket {self.bucket_name} already exists.')
+        self.minio_client.create_bucket(self.bucket_name)
 
         common_columns = ['Fight_ID', 'Fight Date', 'Gender', 'Weight Class', 'Title Fight',
                           'Result', 'Method', 'Round', 'Time', 'Fight Time Format']
@@ -101,10 +81,10 @@ class UFCFightStatsCrawlersPipeline:
     def close_spider(self, spider):
         self.events_file.close()
 
-        self.minio_client.fput_object(
+        self.minio_client.write_file(
             self.bucket_name,
-            self.output_file_name,
-            self.events_file_path
+            self.events_file_path,
+            self.output_file_name
         )
 
         os.remove(self.events_file_path)
@@ -117,7 +97,7 @@ class UFCFightersGeneralStatsCrawlersPipeline:
         if not os.path.exists(DESTINATION_DIR):
             os.mkdir(DESTINATION_DIR)
 
-        self.minio_client = Minio(
+        self.minio_client = MinioClient(
             'minio:9000',
             access_key=os.environ.get('MINIO_USERNAME'),
             secret_key=os.environ.get('MINIO_PASSWORD'),
@@ -126,12 +106,7 @@ class UFCFightersGeneralStatsCrawlersPipeline:
 
         self.bucket_name = os.environ.get('MINIO_RAW_DATA_BUCKET_NAME')
 
-        bucket_exists = self.minio_client.bucket_exists(self.bucket_name)
-
-        if not bucket_exists:
-            self.minio_client.make_bucket(self.bucket_name)
-        else:
-            print(f'Minio Bucket {self.bucket_name} already exists.')
+        self.minio_client.create_bucket(self.bucket_name)
 
         self.header_row = ['Fighter ID', 'Fighter Name', 'Wins', 'Loses',
                            'Draws', 'Height', 'Weight', 'Reach', 'Stance',
@@ -161,10 +136,10 @@ class UFCFightersGeneralStatsCrawlersPipeline:
     def close_spider(self, spider):
         self.fighters_file.close()
 
-        self.minio_client.fput_object(
+        self.minio_client.write_file(
             self.bucket_name,
-            self.output_file_name,
-            self.fighters_file_path
+            self.fighters_file_path,
+            self.output_file_name
         )
 
         os.remove(self.fighters_file_path)
