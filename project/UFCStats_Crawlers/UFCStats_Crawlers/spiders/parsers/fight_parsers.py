@@ -1,4 +1,3 @@
-import sys
 import re
 from scrapy.selector import SelectorList
 

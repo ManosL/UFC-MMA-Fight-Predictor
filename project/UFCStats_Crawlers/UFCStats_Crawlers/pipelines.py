@@ -15,7 +15,6 @@
 
 import csv
 import os
-import sys
 
 from common.schemas import CRAWLED_FIGHTER_COLUMNS, get_crawled_fight_columns
 from common.minio_utils import MinioClient

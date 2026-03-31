@@ -1,7 +1,5 @@
-import sys
 from datetime import datetime
 import scrapy
-import re
 import os
 
 from common.schemas import get_crawled_fight_columns
