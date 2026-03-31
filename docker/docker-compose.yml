@@ -60,14 +60,15 @@ services:
       - MINIO_FIGHTER_CRAWL_LOGS_BUCKET_NAME=${MINIO_FIGHTER_CRAWL_LOGS_BUCKET_NAME}
       - SCRAPYD_USERNAME=${SCRAPYD_USERNAME}
       - SCRAPYD_PASSWORD=${SCRAPYD_PASSWORD}
+      - PYTHONPATH=/app/common:/app/scrapyd/project
     ports:
       - "${SCRAPYDWEB_PORT}:5000"
       - "${SCRAPYD_PORT}:6800"
     volumes:
       - scrapyd-config:/app/config
       - scrapyd:/app/scrapyd
-      - ../UFCStats_Crawlers:/app/scrapyd/project/UFCStats_Crawlers
-      - ../UFCStats_Crawlers/requirements.txt:/requirements.txt
+      - ../project:/app/scrapyd/project
+      - ../project/UFCStats_Crawlers/requirements.txt:/requirements.txt
       - ../src/common:/app/common
 
   processing-python:
