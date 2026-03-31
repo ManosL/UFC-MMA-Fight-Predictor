@@ -8,11 +8,11 @@ etc/
 pyvenv.cfg
 latex_code/
 src/airflow/logs/
-UFCStats_Crawlers/build/
-UFCStats_Crawlers/project.egg-info/
-UFCStats_Crawlers/setup.py
-UFCStats_Crawlers/setup_backup.py
-UFCStats_Crawlers/*.egg
+project/UFCStats_Crawlers/build/
+project/UFCStats_Crawlers/project.egg-info/
+project/UFCStats_Crawlers/setup.py
+project/UFCStats_Crawlers/setup_backup.py
+project/UFCStats_Crawlers/*.egg
 src/machine_learning/results
 __archive/
 __playground/
