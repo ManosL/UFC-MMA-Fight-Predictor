@@ -1,8 +1,5 @@
 import os
-from minio import Minio
-from io import BytesIO, StringIO
-import pandas as pd
-import psycopg2
+from io import StringIO
 
 from utils import get_minio_client, get_postgres_connection
 from utils import read_csv_from_minio_to_pandas
@@ -16,14 +13,14 @@ def main() -> int:
     bucket_name = os.environ.get('MINIO_RAW_DATA_BUCKET_NAME')
 
     files_to_load = [
-                        'fight_new_actual_stats_processed.csv',
-                        'fighters_new_current_stats_processed.csv',
-                    ]
+        'fight_new_actual_stats_processed.csv',
+        'fighters_new_current_stats_processed.csv',
+    ]
 
     tables_to_load_to = [
-                            'new_fight_stats',
-                            'new_fighters_current_stats',
-                        ]
+        'new_fight_stats',
+        'new_fighters_current_stats',
+    ]
 
     for filename, table_name in zip(files_to_load, tables_to_load_to):
         table_creation_file_path = f'/opt/airflow/sql/creation/raw/{table_name}.sql'
@@ -39,11 +36,23 @@ def main() -> int:
             postgres_conn.commit()
 
         buffer = StringIO()
-        df.to_csv(buffer, sep='|', index=False, na_rep='NaN', header=False)  # copy_from doesn’t handle headers
+        df.to_csv(
+            buffer, 
+            sep='|', 
+            index=False, 
+            na_rep='NaN', 
+            header=False
+        )  # copy_from doesn’t handle headers
+        
         buffer.seek(0)
 
-        postgres_cursor.copy_from(buffer, table_name, sep="|",
-                                  null="NaN")  # can change sep/null if needed
+        postgres_cursor.copy_from(
+            buffer, 
+            table_name, 
+            sep="|",
+            null="NaN"
+        )  # can change sep/null if needed
+        
         postgres_conn.commit()
 
     postgres_cursor.close()

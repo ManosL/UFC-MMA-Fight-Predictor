@@ -1,15 +1,7 @@
 from collections.abc import Sequence
-from datetime import datetime, timezone
-import os
 import sys
-from airflow import DAG
-from airflow.sdk import Param, get_current_context
-from airflow.models.xcom_arg import XComArg
-from airflow.utils.task_group import TaskGroup
 from airflow.models.baseoperator import BaseOperator
 from airflow.operators.python import PythonVirtualenvOperator
-from airflow.operators.python import BranchPythonOperator
-from airflow.providers.common.sql.operators.sql import SQLExecuteQueryOperator
 from airflow.operators.empty import EmptyOperator
 
 

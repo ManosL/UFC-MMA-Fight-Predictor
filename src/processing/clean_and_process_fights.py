@@ -5,29 +5,11 @@ import pandas as pd
 from utils import get_minio_client, read_csv_from_minio_to_pandas
 from utils import write_pandas_csv_to_minio
 
-
-event_df_common_columns  = ['Fight_ID', 'Fight Date', 'Gender', 'Weight Class', 
-                            'Title Fight', 'Result', 'Method', 'Round', 'Time',
-                            'Fight Time Format']
-
-event_df_fighter_columns = ['ID', 'Name', 'Nickname', 'Knock Downs', 'Sign.Strikes Done',
-                            'Sign.Strikes Attempted', 'Sign.Strikes Perc.','Total Strikes Done',
-                            'Total Strikes Attempted', 'Takedowns Done', 'Takedowns Attempted',
-                            'Takedowns Perc.', 'Submission Attempts', 'Rev', 'Control']
-
-event_df_fighter_1_prefix = 'Fighter 1 '
-event_df_fighter_2_prefix = 'Fighter 2 '
+from common.schemas import get_crawled_fight_columns
 
 
 def retrieve_initial_dfs(event_df_file_name):
     minio_client = get_minio_client()
-
-    columns =  event_df_common_columns + \
-        [f'{event_df_fighter_1_prefix}{col_name}'
-         for col_name in event_df_fighter_columns]
-
-    columns += [f'{event_df_fighter_2_prefix}{col_name}'
-                for col_name in event_df_fighter_columns]
 
     bucket_name = os.environ.get('MINIO_RAW_DATA_BUCKET_NAME')
 
@@ -35,7 +17,7 @@ def retrieve_initial_dfs(event_df_file_name):
                                                   event_df_file_name, sep='|',
                                                   header=0)
 
-    init_event_df.columns = columns
+    init_event_df.columns = get_crawled_fight_columns()
 
     return init_event_df
 
@@ -82,8 +64,6 @@ def clean_and_preprocess_initial_dfs(init_event_df):
                                                 int(x['Time'].split(':')[1]) / 60),
         axis = 1
     )
-
-    event_df_common_columns.append('Duration_Mins')
 
     init_event_df = init_event_df.replace('No Stats', np.nan)
     init_event_df = init_event_df.replace('--', np.nan)
