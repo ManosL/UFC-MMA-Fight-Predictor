@@ -62,7 +62,7 @@ class MinioClient(Minio):
 
 
     def write_json(
-        self: Minio, 
+        self: Minio,
         bucket_name: str,
         file_name: str,
         json_obj: dict[str, Any]

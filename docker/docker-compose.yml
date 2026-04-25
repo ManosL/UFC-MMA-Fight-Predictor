@@ -72,7 +72,7 @@ services:
       - ../src/common:/app/common
 
   processing-python:
-    image: python:3.11-slim
+    image: python:3.11-slim # Change to 3.12.11 because the scripts runs on Airflow
     working_dir: /workspace
     volumes:
       - ../src/processing:/workspace
@@ -103,7 +103,7 @@ services:
       retries: 3
 
   machine-learning-python:
-    image: python:3.11-slim
+    image: python:3.11-slim # Change to 3.12.11 because the scripts runs on Airflow
     working_dir: /workspace
     volumes:
       - ../src/machine_learning:/workspace

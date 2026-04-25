@@ -1,5 +1,4 @@
 from collections.abc import Sequence
-import sys
 from airflow.models.baseoperator import BaseOperator
 from airflow.operators.python import PythonVirtualenvOperator
 from airflow.operators.empty import EmptyOperator
@@ -14,7 +13,6 @@ def get_processing_requirements() -> Sequence[str]:
 
 
 def clean_and_process_fights_venv() -> None:
-    sys.path.append("/opt/airflow/processing")
     from clean_and_process_fights import main
 
     main()
@@ -22,7 +20,6 @@ def clean_and_process_fights_venv() -> None:
 
 
 def configure_fighters_dataset_venv() -> None:
-    sys.path.append("/opt/airflow/processing")
     from Configure_Fighters_Dataset import main
 
     main()
@@ -30,7 +27,6 @@ def configure_fighters_dataset_venv() -> None:
 
 
 def load_to_postgres_venv() -> None:
-    sys.path.append("/opt/airflow/processing")
     from load_to_postgres import main
 
     main()

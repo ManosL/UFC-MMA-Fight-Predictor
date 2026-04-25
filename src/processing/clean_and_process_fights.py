@@ -1,96 +1,70 @@
-import os
-import numpy as np
 import pandas as pd
 
-from utils import get_minio_client, read_csv_from_minio_to_pandas
-from utils import write_pandas_csv_to_minio
+from constants import (
+    RAW_FIGHT_STATS_FILENAME,
+    PROCESSED_FIGHT_STATS_FILENAME
+)
 
-from common.schemas import get_crawled_fight_columns
+from helpers.gender_resolution import (
+    resolve_fight_gender
+)
+
+from helpers.io import (
+    retrieve_df_from_csv,
+    write_resulting_csv
+)
+from helpers.transform import (
+    normalize_no_val_to_nan,
+    convert_end_time_in_total_fight_mins
+)
+
+from helpers.filtering import (
+    filter_fights_with_valid_time_formats
+)
 
 
-def retrieve_initial_dfs(event_df_file_name):
-    minio_client = get_minio_client()
+def clean_and_process_initial_dfs(raw_fights_df: pd.DataFrame) -> pd.DataFrame:
+    processed_fights_df = raw_fights_df.copy()
+    processed_fights_df['Fight Date'] = pd.to_datetime(processed_fights_df['Fight Date'])
 
-    bucket_name = os.environ.get('MINIO_RAW_DATA_BUCKET_NAME')
-
-    init_event_df = read_csv_from_minio_to_pandas(minio_client, bucket_name,
-                                                  event_df_file_name, sep='|',
-                                                  header=0)
-
-    init_event_df.columns = get_crawled_fight_columns()
-
-    return init_event_df
-
-
-
-def clean_and_preprocess_initial_dfs(init_event_df):
-    init_event_df['Fight Date'] = pd.to_datetime(init_event_df['Fight Date'])
-
-    # Women first fought in UFC before 2013-02-23, thus, with this info we can 
-    # derive some unknown genders
-    mask = (init_event_df['Fight Date'] < pd.to_datetime('2013-02-23')) & (init_event_df['Gender'] == 'unknown')
-    init_event_df[mask]['Gender'] = 'male'
-
-    # Fix "unknown" gender due to catch weight bouts by checking the gender from another fight
-    known = init_event_df[init_event_df['Gender'] != 'unknown']
-
-    id_gender_1 = known[['Fighter 1 ID', 'Gender']].rename(columns={'Fighter 1 ID': 'fighter_id'})
-    id_gender_2 = known[['Fighter 2 ID', 'Gender']].rename(columns={'Fighter 2 ID': 'fighter_id'})
-
-    id_gender = pd.concat([id_gender_1, id_gender_2], ignore_index=True)
-
-    # choose the most common known gender per fighter_id
-    gender_map = id_gender.groupby('fighter_id')['Gender'].agg(lambda x: x.mode().iloc[0])
-
-    fill_1 = init_event_df['Fighter 1 ID'].map(gender_map)
-    fill_2 = init_event_df['Fighter 2 ID'].map(gender_map)
-
-    init_event_df['Gender'] = init_event_df['Gender'].mask(
-        init_event_df['Gender'].eq('unknown'),
-        fill_1.combine_first(fill_2)
-    ).fillna('unknown')
+    processed_fights_df["Gender"] = resolve_fight_gender(processed_fights_df)
 
     # I will only keep the matches that are 3 or 5 rounds of 5 minutes because fighters
     # of other fight formats had probably retired and because the requirements to win
     # might be different because at that times the rules were another for example.
 
-    valid_fight_formats = ['3Rnd(5-5-5)', '5Rnd(5-5-5-5-5)', '3Rnd+OT(5-5-5-5)']
-    init_event_df = init_event_df[init_event_df['Fight Time Format'].isin(valid_fight_formats)]
-    init_event_df = init_event_df.sort_values(by='Fight Date')
+    processed_fights_df = filter_fights_with_valid_time_formats(
+        processed_fights_df,
+        valid_fight_time_formats=[
+            '3Rnd(5-5-5)',
+            '5Rnd(5-5-5-5-5)',
+            '3Rnd+OT(5-5-5-5)'
+        ]
+    )
 
-    # Add the following here for now but normally it should be on preprocessing
-    init_event_df['Duration_Mins'] = init_event_df[['Round', 'Time']].apply(
-        lambda x: (int(x['Round']) - 1) * 5.0 + (int(x['Time'].split(':')[0]) +
-                                                int(x['Time'].split(':')[1]) / 60),
+    processed_fights_df = processed_fights_df.sort_values(by='Fight Date')
+
+    processed_fights_df['Duration_Mins'] = processed_fights_df.apply(
+        lambda x: convert_end_time_in_total_fight_mins(x),
         axis = 1
     )
 
-    init_event_df = init_event_df.replace('No Stats', np.nan)
-    init_event_df = init_event_df.replace('--', np.nan)
-    init_event_df = init_event_df.replace('---', np.nan)
+    processed_fights_df = normalize_no_val_to_nan(
+        processed_fights_df,
+        nan_repr=["No Stats", "--", "---"]
+    )
 
-    return init_event_df
-
-
-def write_resulting_csv(resulting_df):
-    minio_client = get_minio_client()
-
-    bucket_name = os.environ.get('MINIO_RAW_DATA_BUCKET_NAME')
-    write_pandas_csv_to_minio(minio_client, bucket_name,
-                              "fight_new_actual_stats_processed.csv",
-                              resulting_df, sep='|', na_rep='NaN',
-                              index=False)
-
-    return
+    return processed_fights_df
 
 
 def main():
-    init_event_datafile_name = 'fight_new_actual_stats.csv'
+    raw_fights_df = retrieve_df_from_csv(RAW_FIGHT_STATS_FILENAME)
+    processed_fights_df = clean_and_process_initial_dfs(raw_fights_df)
 
-    init_event_df = retrieve_initial_dfs(init_event_datafile_name)
-    result_df = clean_and_preprocess_initial_dfs(init_event_df)
-
-    write_resulting_csv(result_df)
+    write_resulting_csv(
+        processed_fights_df,
+        PROCESSED_FIGHT_STATS_FILENAME
+    )
     return 0
 
 
