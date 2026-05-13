@@ -60,59 +60,93 @@ def resolve_fight_gender(
     return new_genders
 
 
+def resolve_gender_from_detector(
+    detector: gender.Detector, 
+    name: str
+) -> str:
+    fighters_gender = detector.get_gender(name.split()[0])
+
+    if fighters_gender in {"male", 'mostly_male'}:
+        return "male"
+    
+    if fighters_gender in {"female", 'mostly_female'}:
+        return "female"
+    
+    return UNKNOWN_GENDER_VALUE
+
+
+def determine_gender(
+    fights: pd.DataFrame,
+    gender_detector: gender.Detector,
+    gender_col_name: str,
+    fighter_name_col_name: str
+) -> str:
+    fighter_name = fights[fighter_name_col_name].iloc[0]
+    fighter_does_not_have_fights = fights["Fight Date"].isna().all()
+
+    gender = UNKNOWN_GENDER_VALUE
+
+    if fighter_does_not_have_fights:
+        gender = resolve_gender_from_detector(gender_detector, fighter_name)
+    else:
+        min_fight_date = fights["Fight Date"].min()
+
+        if min_fight_date < FIRST_UFC_FEMALE_FIGHT_DATE:
+            gender = "male"
+        else:
+            known_gender_fights = fights.loc[
+                fights[gender_col_name] != UNKNOWN_GENDER_VALUE,
+                gender_col_name
+            ]
+
+            if not known_gender_fights.empty:
+                gender = known_gender_fights.mode().iloc[0]
+
+    if gender == UNKNOWN_GENDER_VALUE:
+        if fighter_name in full_names_to_gender.keys():
+            gender = full_names_to_gender[fighter_name]
+
+    return gender
+
+
 def resolve_fighter_gender(
     fights_df: pd.DataFrame,
-    fighters_df: pd.DataFrame
+    fighters_df: pd.DataFrame,
+    gender_col_name: str = "Gender",
+    fighter_id_col_name: str = "Fighter ID",
+    fighter_name_col_name: str = "Fighter Name",
+    fighter_1_id_col_name: str = "Fighter 1 ID",
+    fighter_2_id_col_name: str = "Fighter 2 ID"
 ) -> pd.Series:
-    d = gender.Detector()
+    detector = gender.Detector()
 
-    fighters_ids   = list(fighters_df['Fighter ID'])
-    fighters_names = list(fighters_df['Fighter Name'])
-    genders = []
+    fights_df_gender = fights_df[["Fight Date", fighter_1_id_col_name, fighter_2_id_col_name, gender_col_name]].copy()
+    fights_df_gender = fights_df_gender.melt(
+        id_vars=["Fight Date", gender_col_name],
+        value_vars=[fighter_1_id_col_name, fighter_2_id_col_name],
+        var_name="fighter_position",
+        value_name=fighter_id_col_name
+    )
+    
+    fighters_df_copy = fighters_df[[fighter_id_col_name, fighter_name_col_name]].copy()
 
-    for i in range(len(fighters_ids)):
-        fighter_id     = fighters_ids[i]
+    total_appearances = fighters_df_copy.merge(
+        fights_df_gender, 
+        how="left", 
+        on=fighter_id_col_name
+    )
 
-        fighters_fights_1 = fights_df[(fights_df['Fighter 1 ID'] == fighter_id)]
-        fighters_fights_2 = fights_df[(fights_df['Fighter 2 ID'] == fighter_id)]
+    total_appearances_grouped = total_appearances.groupby(by=fighter_id_col_name)
+    gender_map = total_appearances_grouped.apply(
+        lambda group: determine_gender(
+            group,
+            detector,
+            gender_col_name,
+            fighter_name_col_name
+        ),
+        include_groups=False
+    )
 
-        # If the fighter did not fought previously we cannot determine its gender
-        # from his/her fights
-        if len(fighters_fights_1) == 0 and len(fighters_fights_2) == 0:
-            # If the fighter does not have any fights, use the detector
-            fighter_name = fighters_names[i]
+    genders = fighters_df[fighter_id_col_name].map(gender_map).fillna(UNKNOWN_GENDER_VALUE)
 
-            fighters_gender = d.get_gender(fighter_name.split()[0])
-
-            fighters_gender = "male" if fighters_gender in {"male", 'mostly_male'} else fighters_gender
-            fighters_gender = "female" if fighters_gender in {"female", 'mostly_female'} else fighters_gender
-
-            # If the detector cannot determine the gender, our last hope is to use the hard coded dict
-            if fighters_gender in {'andy', 'unknown'}:
-                if fighter_name in full_names_to_gender.keys():
-                    fighters_gender = full_names_to_gender[fighter_name]
-                else:
-                    fighters_gender = 'unknown'
-
-            genders.append(fighters_gender)
-        else:
-            mask = (fights_df['Fighter 1 ID'] == fighter_id) | (fights_df['Fighter 2 ID'] == fighter_id)
-            min_fight_date = fights_df[mask]["Fight Date"].min()
-
-            if min_fight_date < FIRST_UFC_FEMALE_FIGHT_DATE:
-                fighters_gender = 'male'
-            else:
-                fighters_gender = fighters_fights_1[fighters_fights_1['Gender'] != 'unknown']['Gender'].mode()
-
-                if fighters_gender.empty:
-                    fighters_gender = fighters_fights_2[fighters_fights_2['Gender'] != 'unknown']['Gender'].mode()
-
-                fighters_gender = 'unknown' if fighters_gender.empty else fighters_gender.iloc[0]
-
-                if fighters_gender == 'unknown':
-                    if fighters_names[i] in full_names_to_gender.keys():
-                        fighters_gender = full_names_to_gender[fighters_names[i]]
-
-            genders.append(fighters_gender)
-
-    return pd.Series(genders)
+    return genders
