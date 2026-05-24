@@ -23,6 +23,10 @@ DESTINATION_DIR = '/tmp'
 
 
 class BaseCSVPipeline:
+    def __extract_version_id(self, spider):
+        return os.path.basename(spider.settings["LOG_FILE"]).split('.')[0].replace(f"{spider.name}_", "", 1)
+
+
     def open_spider(self, spider):
         if not os.path.exists(DESTINATION_DIR):
             os.mkdir(DESTINATION_DIR)
@@ -38,7 +42,9 @@ class BaseCSVPipeline:
 
         self.minio_client.create_bucket(self.bucket_name)
 
-        # TODO: IN FILE NAME BECAUSE MANY USERS MIGHT RUN AT THE SAME TIME APPEND A TIMESTAMP
+        version_id = self.__extract_version_id(spider)
+        self.output_minio_path = os.path.join(version_id, self.output_file_name)
+
         self.csv_file_path = os.path.join(DESTINATION_DIR, self.output_file_name)
         self.csv_file = open(self.csv_file_path, 'w', newline='')
         self.csv_writer = csv.writer(self.csv_file, delimiter='|')
@@ -62,7 +68,7 @@ class BaseCSVPipeline:
         self.minio_client.write_file(
             self.bucket_name,
             self.csv_file_path,
-            self.output_file_name
+            self.output_minio_path
         )
 
         os.remove(self.csv_file_path)

@@ -34,9 +34,11 @@ class FightersSpider(scrapy.Spider):
                 secure=False
             )
 
+            job_id = os.path.basename(self.settings["LOG_FILE"]).split('.')[0]
+
             event_data = minio_client.read_csv_to_pandas(
                 os.environ.get("MINIO_RAW_DATA_BUCKET_NAME"),
-                "fight_new_actual_stats.csv",
+                os.path.join(job_id, "fight_new_actual_stats.csv"),
                 sep='|', 
                 header=0
             )

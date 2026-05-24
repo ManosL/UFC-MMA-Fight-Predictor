@@ -12,13 +12,10 @@ def schedule_spider(
         spider_name: str,
         scrapyd_username: str,
         scrapyd_password: str,
+        version_id: str,
         is_incremental: str = "False",
-        lookup_days: int = 10
+        lookup_days: int = 10,
 ) -> dict[str, Any]:
-    now = datetime.now(timezone.utc)
-    timestamp = now.strftime("%Y-%m-%dT%H_%M_%S_%f")
-    job_id = f"{timestamp}_{secrets.token_hex(3)}"
-
     response = requests.post(
                     f'{base_url}/schedule.json',
                     data={
@@ -26,7 +23,7 @@ def schedule_spider(
                         'spider': spider_name,
                         'is_incremental': is_incremental,
                         'lookup_days': lookup_days,
-                        'jobid': job_id
+                        'jobid': f"{spider_name}_{version_id}"
                     },
                     auth=(scrapyd_username, scrapyd_password,),
                 )
@@ -66,6 +63,7 @@ def crawl_from_scrapyd(
     base_url: str,
     project_name: str,
     spider_name: str,
+    version_id: str,
     is_incremental: str = "False",
     lookup_days: int = 10
 ) -> str:
@@ -74,9 +72,16 @@ def crawl_from_scrapyd(
 
     base_url = base_url.strip('/')
 
-    response = schedule_spider(base_url, project_name, spider_name,
-                               scrapyd_username, scrapyd_password,
-                               is_incremental, lookup_days)
+    response = schedule_spider(
+        base_url, 
+        project_name, 
+        spider_name,
+        scrapyd_username, 
+        scrapyd_password,
+        version_id,
+        is_incremental, 
+        lookup_days
+    )
 
     job_id = response['jobid']
 
@@ -84,12 +89,14 @@ def crawl_from_scrapyd(
     curr_status = None
 
     while curr_status != 'finished':
-        curr_status = check_running_spider_job_status(base_url, job_id,
-                                                      scrapyd_username,
-                                                      scrapyd_password
-                                                    )
+        curr_status = check_running_spider_job_status(
+            base_url, 
+            job_id,
+            scrapyd_username,
+            scrapyd_password
+        )
         print(curr_status)
         sleep(poll_frequency)
 
     print('Crawling finished successfully')
-    return job_id
+    return version_id

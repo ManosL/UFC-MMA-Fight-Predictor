@@ -1,3 +1,5 @@
+import os
+import argparse
 import pandas as pd
 
 from constants import (
@@ -57,16 +59,22 @@ def clean_and_process_raw_fights_df(raw_fights_df: pd.DataFrame) -> pd.DataFrame
     return processed_fights_df
 
 
-def main():
-    raw_fights_df = retrieve_df_from_csv(RAW_FIGHT_STATS_FILENAME)
+def main(version_id: str) -> int:
+    raw_fights_df = retrieve_df_from_csv(
+        os.path.join(version_id, RAW_FIGHT_STATS_FILENAME)
+    )
     processed_fights_df = clean_and_process_raw_fights_df(raw_fights_df)
 
     write_resulting_csv(
         processed_fights_df,
-        PROCESSED_FIGHT_STATS_FILENAME
+        os.path.join(version_id, PROCESSED_FIGHT_STATS_FILENAME)
     )
     return 0
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument("--version_id", "-v", help="Version ID")
+    parser.parse_args()
+    main(parser.version_id)

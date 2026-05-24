@@ -8,7 +8,8 @@ with DAG(
     dag_id="crawl_ufcstats_site",
     params={
         "is_incremental": Param(False, type="boolean"),
-        "lookup_days": Param(15, type="integer")
+        "lookup_days": Param(15, type="integer"),
+        "version_id": Param("", type=["string"])
     },
     start_date=datetime(2025, 1, 1),
     schedule=None,

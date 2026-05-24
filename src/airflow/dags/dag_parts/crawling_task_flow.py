@@ -11,32 +11,34 @@ def crawl_from_scrapyd_venv(
     base_url: str,
     project_name: str,
     spider_name: str,
+    version_id: str,
     is_incremental: bool = "False",
     lookup_days: int = 15,
 ) -> str:
     sys.path.append('/opt/airflow/dags')
     from scripts.crawl_from_scrapyd import crawl_from_scrapyd
 
-    job_id = crawl_from_scrapyd(
+    version_id = crawl_from_scrapyd(
         base_url,
         project_name,
         spider_name,
+        version_id,
         is_incremental,
         int(lookup_days)
     )
 
-    return job_id
+    return version_id
 
 
 def validate_crawl_venv(
     spider_name: str,
     bucket_name: str,
-    job_id: str
+    version_id: str
 ) -> None:
     sys.path.append('/opt/airflow/dags')
     from scripts.validate_crawl import validate_crawl
 
-    validate_crawl(spider_name, bucket_name, job_id)
+    validate_crawl(spider_name, bucket_name, version_id)
 
     return
 
@@ -59,6 +61,7 @@ def get_full_crawl_task_flow() -> BaseOperator:
             "base_url": "http://scrapy-server:6800",
             "project_name": "UFCStats_Crawlers",
             "spider_name": "event_spider",
+            "version_id": "{{ ti.xcom_pull(task_ids='determine_version_id') or params.version_id }}",
             "is_incremental": "False",
             "lookup_days": 15
         },
@@ -74,7 +77,7 @@ def get_full_crawl_task_flow() -> BaseOperator:
         op_kwargs={
             "spider_name": "event_spider",
             "bucket_name": os.environ["MINIO_EVENT_CRAWL_LOGS_BUCKET_NAME"],
-            "job_id": XComArg(crawl_fights_task)
+            "version_id": XComArg(crawl_fights_task)
         },
         requirements=[
             "minio",
@@ -89,6 +92,7 @@ def get_full_crawl_task_flow() -> BaseOperator:
             "base_url": "http://scrapy-server:6800",
             "project_name": "UFCStats_Crawlers",
             "spider_name": "fighters_spider",
+            "version_id": "{{ ti.xcom_pull(task_ids='determine_version_id') or params.version_id }}",
             "is_incremental": "False",
             "lookup_days": 15
         },
@@ -104,7 +108,7 @@ def get_full_crawl_task_flow() -> BaseOperator:
         op_kwargs={
             "spider_name": "fighters_spider",
             "bucket_name": os.environ["MINIO_FIGHTER_CRAWL_LOGS_BUCKET_NAME"],
-            "job_id": XComArg(crawl_fighters_task)
+            "version_id": XComArg(crawl_fighters_task)
         },
         requirements=[
             "minio",
@@ -132,6 +136,7 @@ def get_incremental_crawl_task_flow() -> BaseOperator:
             "base_url": "http://scrapy-server:6800",
             "project_name": "UFCStats_Crawlers",
             "spider_name": "event_spider",
+            "version_id": "{{ ti.xcom_pull(task_ids='determine_version_id') or params.version_id }}",
             "is_incremental": "True",
             "lookup_days": "{{ params.lookup_days }}"
         },
@@ -147,7 +152,7 @@ def get_incremental_crawl_task_flow() -> BaseOperator:
         op_kwargs={
             "spider_name": "event_spider",
             "bucket_name": os.environ["MINIO_EVENT_CRAWL_LOGS_BUCKET_NAME"],
-            "job_id": XComArg(crawl_fights_task)
+            "version_id": XComArg(crawl_fights_task)
         },
         requirements=[
             "minio",
@@ -162,6 +167,7 @@ def get_incremental_crawl_task_flow() -> BaseOperator:
             "base_url": "http://scrapy-server:6800",
             "project_name": "UFCStats_Crawlers",
             "spider_name": "fighters_spider",
+            "version_id": "{{ ti.xcom_pull(task_ids='determine_version_id') or params.version_id }}",
             "is_incremental": "True",
             "lookup_days": "{{ params.lookup_days }}"
         },
@@ -177,7 +183,7 @@ def get_incremental_crawl_task_flow() -> BaseOperator:
         op_kwargs={
             "spider_name": "fighters_spider",
             "bucket_name": os.environ["MINIO_FIGHTER_CRAWL_LOGS_BUCKET_NAME"],
-            "job_id": XComArg(crawl_fighters_task)
+            "version_id": XComArg(crawl_fighters_task)
         },
         requirements=[
             "minio",

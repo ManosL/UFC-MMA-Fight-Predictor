@@ -12,24 +12,24 @@ def get_processing_requirements() -> Sequence[str]:
     return requirements
 
 
-def clean_and_process_fights_venv() -> None:
+def clean_and_process_fights_venv(version_id: str) -> None:
     from clean_and_process_fights import main
 
-    main()
+    main(version_id)
     return
 
 
-def configure_fighters_dataset_venv() -> None:
+def configure_fighters_dataset_venv(version_id: str) -> None:
     from Configure_Fighters_Dataset import main
 
-    main()
+    main(version_id)
     return
 
 
-def load_to_postgres_venv() -> None:
+def load_to_postgres_venv(version_id: str) -> None:
     from load_to_postgres import main
 
-    main()
+    main(version_id)
     return
 
 
@@ -41,6 +41,9 @@ def get_processing_task_flow() -> BaseOperator:
     clean_and_process_fights_task = PythonVirtualenvOperator(
         task_id="clean_and_process_fights",
         python_callable=clean_and_process_fights_venv,
+        op_kwargs={
+            "version_id": "{{ ti.xcom_pull(task_ids='determine_version_id') or params.version_id }}"
+        },
         requirements=processing_requirements,
         system_site_packages=False,
     )
@@ -48,6 +51,9 @@ def get_processing_task_flow() -> BaseOperator:
     configure_fighters_dataset_task = PythonVirtualenvOperator(
         task_id="configure_fighters_dataset",
         python_callable=configure_fighters_dataset_venv,
+        op_kwargs={
+            "version_id": "{{ ti.xcom_pull(task_ids='determine_version_id') or params.version_id }}"
+        },
         requirements=processing_requirements,
         system_site_packages=False,
     )
@@ -55,6 +61,9 @@ def get_processing_task_flow() -> BaseOperator:
     load_to_postgres_task = PythonVirtualenvOperator(
         task_id="load_to_postgres",
         python_callable=load_to_postgres_venv,
+        op_kwargs={
+            "version_id": "{{ ti.xcom_pull(task_ids='determine_version_id') or params.version_id }}"
+        },
         requirements=processing_requirements,
         system_site_packages=False,
     )

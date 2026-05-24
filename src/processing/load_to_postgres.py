@@ -1,3 +1,5 @@
+import os
+import argparse
 from io import StringIO
 
 from common.psycopg_utils import get_postgres_connection
@@ -12,7 +14,7 @@ from helpers.io import (
 )
 
 
-def main() -> int:
+def main(version_id: str) -> int:
     postgres_conn = get_postgres_connection()
     postgres_cursor = postgres_conn.cursor()
 
@@ -20,6 +22,8 @@ def main() -> int:
         PROCESSED_FIGHT_STATS_FILENAME,
         PROCESSED_FIGHTER_STATS_FILENAME,
     ]
+
+    files_to_load = [os.path.join(version_id, filename) for filename in files_to_load]
 
     tables_to_load_to = [
         'new_fight_stats',
@@ -65,4 +69,8 @@ def main() -> int:
 
 
 if __name__ == '__main__':
-    main()
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument("--version_id", "-v", help="Version ID")
+    parser.parse_args()
+    main(parser.version_id)

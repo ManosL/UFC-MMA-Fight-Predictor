@@ -149,8 +149,6 @@ In this report, I analyze around the finishing methods and in fact monitor the f
 
 ### Data Engineering
 
-- Refactor the code
-- Version raw outputs
 - Revision Data Model
 - Additional features in the warehouse + reflecting them downstream
 - Data (Quality) Tests

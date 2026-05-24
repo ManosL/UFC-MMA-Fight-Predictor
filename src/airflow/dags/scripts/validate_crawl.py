@@ -59,11 +59,11 @@ def validate_fighters_crawl(stats: dict[str, Any]) -> None:
 def validate_crawl(
     spider_name: str,
     bucket_name: str,
-    job_id: str
+    version_id: str
 ) -> None:
     minio_client = get_minio_client()
 
-    stats = read_json_from_minio(minio_client, bucket_name, f"{job_id}.log")
+    stats = read_json_from_minio(minio_client, bucket_name, f"{version_id}.log")
 
     if spider_name == "event_spider":
         validate_events_crawl(stats)

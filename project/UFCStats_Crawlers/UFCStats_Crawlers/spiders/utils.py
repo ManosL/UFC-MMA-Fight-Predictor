@@ -49,6 +49,7 @@ def save_crawling_stats_to_minio(
     spider.crawler.stats.set_value("log_file_url", log_file_url)
 
     stats_file_name = os.path.basename(spider.settings["LOG_FILE"])
+    stats_file_name = stats_file_name.replace(f"{spider.name}_", "", 1)
 
     spider.logger.info(minio_client.create_bucket(bucket_name))
 
