@@ -2,4 +2,5 @@ Scrapy==2.13.3
 pandas==2.3.1
 minio==7.2.16
 scrapyd-client
+scrapy-playwright
 -e /app/common

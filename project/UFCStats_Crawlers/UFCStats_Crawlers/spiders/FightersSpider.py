@@ -2,6 +2,8 @@ import os
 import string
 import scrapy
 
+from scrapy_playwright.page import PageMethod
+
 from common.minio_utils import MinioClient
 from common.schemas import CRAWLED_FIGHTER_COLUMNS
 
@@ -10,6 +12,7 @@ from UFCStats_Crawlers.spiders.parsers.fighter_parsers import parse_measurements
 
 from UFCStats_Crawlers.spiders.utils import get_fighter_id_from_url
 from UFCStats_Crawlers.spiders.utils import save_crawling_stats_to_minio
+from UFCStats_Crawlers.spiders.utils import get_playwright_kwargs, get_cookies_from_playwright_page
 
 
 class FightersSpider(scrapy.Spider):
@@ -19,7 +22,7 @@ class FightersSpider(scrapy.Spider):
     custom_settings = {
         "ITEM_PIPELINES": {
             "UFCStats_Crawlers.pipelines.UFCFightersGeneralStatsCrawlersPipeline": 300,
-        }
+        },
     }
 
     def parse(self, response):
@@ -35,10 +38,11 @@ class FightersSpider(scrapy.Spider):
             )
 
             job_id = os.path.basename(self.settings["LOG_FILE"]).split('.')[0]
+            version_id = job_id.replace(f"{self.name}_", "", 1)
 
             event_data = minio_client.read_csv_to_pandas(
                 os.environ.get("MINIO_RAW_DATA_BUCKET_NAME"),
-                os.path.join(job_id, "fight_new_actual_stats.csv"),
+                os.path.join(version_id, "fight_new_actual_stats.csv"),
                 sep='|', 
                 header=0
             )
@@ -50,15 +54,32 @@ class FightersSpider(scrapy.Spider):
             for fighter_id in all_fighter_ids:
                 next_url = f"http://ufcstats.com/fighter-details/{fighter_id}"
 
-                yield scrapy.Request(url=next_url, callback=self.fighter_parse)
+                yield scrapy.Request(
+                    url=next_url,
+                    meta=get_playwright_kwargs(
+                        playwright_context="ufcstats_fighter",
+                        selectors_to_wait=["h2.b-content__title"],
+                        include_page=False
+                    ),
+                    callback=self.fighter_parse,
+                )
         else:
             links = ['http://www.ufcstats.com/statistics/fighters?char=' + l + '&page=all'
                         for l in list(string.ascii_lowercase)]
 
             for link in links:
-                yield scrapy.Request(url=link, callback=self.letter_parse)
+                yield scrapy.Request(
+                    url=link,
+                    meta=get_playwright_kwargs(
+                        playwright_context="ufcstats_fighter",
+                        selectors_to_wait=["table.b-statistics__table"]
+                    ),
+                    callback=self.letter_parse,
+                )
 
-    def letter_parse(self, response):
+    async def letter_parse(self, response):
+        scrapy_cookies = await get_cookies_from_playwright_page(response)
+
         links = []
 
         table_rows = response.css('table.b-statistics__table tbody tr.b-statistics__table-row')
@@ -70,11 +91,35 @@ class FightersSpider(scrapy.Spider):
 
         print(len(links), response.url)
         self.crawler.stats.inc_value("fighters_expected", len(links))
-        for link in links:
-            yield scrapy.Request(url=link, callback=self.fighter_parse)
+        for i, link in enumerate(links):
+            yield scrapy.Request(
+                url=link,
+                cookies=scrapy_cookies,
+                meta={
+                    "scrapy_cookies": scrapy_cookies,
+                },
+                callback=self.fighter_parse,
+            )
 
 
     def fighter_parse(self, response):
+        if not response.meta.get("playwright", False) and "checking your browser" in response.text.lower():
+            self.logger.warning("Browser check detected. Retrying with Playwright: %s", response.url)
+
+            yield response.request.replace(
+                callback=self.fighter_parse,
+                dont_filter=True,
+                meta={
+                    **response.meta,
+                    **get_playwright_kwargs(
+                        playwright_context="ufcstats_fighter",
+                        selectors_to_wait=["h2.b-content__title"],
+                        include_page=False
+                    )
+                },
+            )
+            return
+
         final_row = []
 
         fighter_id = get_fighter_id_from_url(response.url)

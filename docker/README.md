@@ -49,6 +49,7 @@ docker exec -it docker-scrapy-server-1 bash
 - Install the necessary dependencies:
 ```
 pip install -r /requirements.txt
+playwright install --with-deps
 ```
 - Deploy the Spiders that are inside the `UFCStats_Crawlers` project:
 ```

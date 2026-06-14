@@ -2,8 +2,10 @@ from copy import deepcopy
 import os
 import re
 from pathlib import Path
+from typing import Any
 from urllib.parse import urljoin
 import scrapy
+from scrapy_playwright.page import PageMethod
 
 from common.minio_utils import MinioClient
 
@@ -21,6 +23,43 @@ def get_fight_id_from_url(url: str) -> str:
 
     return id.strip()
 	
+
+def get_playwright_kwargs(
+    playwright_context: str,
+    selectors_to_wait: list[str],
+    *,
+    include_page: bool = True,
+) -> dict[str, Any]:
+    return {
+        "playwright": True,
+        "playwright_include_page": include_page,
+        "playwright_context": playwright_context,
+        "playwright_page_methods": [
+            PageMethod(
+                "wait_for_selector", 
+                selector,
+                state="attached",
+            )
+            for selector in selectors_to_wait
+        ],
+        "playwright_page_goto_kwargs": {
+            "wait_until": "commit",
+        }
+    }
+
+
+async def get_cookies_from_playwright_page(response):
+    page = response.meta["playwright_page"]
+
+    playwright_cookies = await page.context.cookies()
+    await page.close()
+
+    return {
+        cookie["name"]: cookie["value"]
+        for cookie in playwright_cookies
+        if cookie["domain"] in {"www.ufcstats.com", ".ufcstats.com"}
+    }
+
 
 def log_path_to_scrapyd_url(log_path: str) -> str:
     LOGS_DIR = Path("/app/scrapyd/logs")

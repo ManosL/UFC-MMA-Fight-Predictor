@@ -2,6 +2,8 @@ from datetime import datetime
 import scrapy
 import os
 
+from scrapy_playwright.page import PageMethod
+
 from common.schemas import get_crawled_fight_columns
 
 from UFCStats_Crawlers.spiders.parsers.fight_parsers import process_event_name, process_bout_description
@@ -10,11 +12,12 @@ from UFCStats_Crawlers.spiders.parsers.fight_parsers import get_fight_result, pa
 from UFCStats_Crawlers.spiders.parsers.fight_parsers import parse_outcome_section
 
 from UFCStats_Crawlers.spiders.utils import get_fight_id_from_url, save_crawling_stats_to_minio
+from UFCStats_Crawlers.spiders.utils import get_playwright_kwargs, get_cookies_from_playwright_page
 
 
 class EventSpider(scrapy.Spider):
 	name = 'event_spider'
-	start_urls = ['http://www.ufcstats.com/statistics/events/completed?page=all']
+	start_urls = ['']
 
 	custom_settings = {
         "ITEM_PIPELINES": {
@@ -22,7 +25,21 @@ class EventSpider(scrapy.Spider):
         }
     }
 
-	def parse(self, response):
+	def start_requests(self):
+		yield scrapy.Request(
+            url="http://www.ufcstats.com/statistics/events/completed?page=all",
+            meta=get_playwright_kwargs(
+				playwright_context="ufcstats",
+				selectors_to_wait=["tr.b-statistics__table-row"]
+			),
+            callback=self.parse,
+        )
+
+
+
+	async def parse(self, response):
+		scrapy_cookies = await get_cookies_from_playwright_page(response)
+
 		self.is_incremental = False if self.is_incremental.lower() == "false" else True
 
 		self.logger.debug(f'Will spider run incrementally: {bool(self.is_incremental)}')
@@ -57,11 +74,40 @@ class EventSpider(scrapy.Spider):
 		self.crawler.stats.inc_value("events_expected", len(event_links))
 
 		for link, date in zip(event_links, event_dates, strict=True):
-			yield scrapy.Request(url=link, callback=self.event_parse, meta={'event_date': date})
+			yield scrapy.Request(
+				url=link,
+				cookies=scrapy_cookies,
+				meta={
+					"event_date": date,
+					"scrapy_cookies": scrapy_cookies
+				},
+				callback=self.event_parse,
+			)
 
 
 
-	def event_parse(self, response):
+	async def event_parse(self, response):
+		if not response.meta.get("playwright", False) and "checking your browser" in response.text.lower():
+			self.logger.warning("Browser check detected. Retrying with Playwright: %s", response.url)
+
+			yield response.request.replace(
+				callback=self.event_parse,
+				dont_filter=True,
+				meta={
+					**response.meta,
+					**get_playwright_kwargs(
+						playwright_context="ufcstats",
+						selectors_to_wait=["div.l-page__container"]
+					)
+				},
+			)
+			return
+
+		if response.meta.get("playwright", False):
+			scrapy_cookies = await get_cookies_from_playwright_page(response)
+		else:
+			scrapy_cookies = response.meta.get("scrapy_cookies")
+
 		event_name_selector = 'div.l-page__container h2.b-content__title span::text'
 
 		event_name = response.css(event_name_selector).get()
@@ -79,14 +125,35 @@ class EventSpider(scrapy.Spider):
 		self.crawler.stats.inc_value("fights_expected", len(rows))
 
 		for link in rows:
-			yield scrapy.Request(url = link, callback=self.fight_parse,
-								meta={
-									'event_date': response.meta.get('event_date'),
-									'fight_id': get_fight_id_from_url(link)
-								})
+			yield scrapy.Request(
+				url=link,
+				cookies=scrapy_cookies,
+				meta={
+					"event_date": response.meta.get('event_date'),
+					"fight_id": get_fight_id_from_url(link),
+				},
+				callback=self.fight_parse,
+			)
 
 
-	def fight_parse(self,response):
+	def fight_parse(self, response):
+		if not response.meta.get("playwright", False) and "checking your browser" in response.text.lower():
+			self.logger.warning("Browser check detected. Retrying with Playwright: %s", response.url)
+
+			yield response.request.replace(
+				callback=self.fight_parse,
+				dont_filter=True,
+				meta={
+					**response.meta,
+					**get_playwright_kwargs(
+						playwright_context="ufcstats",
+						selectors_to_wait=["h2.b-content__title"],
+						include_page=False
+					)
+				},
+			)
+			return
+		
 		fighter1_info = []
 		fighter2_info = []
 		fight_info = []
