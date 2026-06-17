@@ -20,10 +20,6 @@ from helpers.transform import (
     convert_end_time_in_total_fight_mins
 )
 
-from helpers.filtering import (
-    filter_fights_with_valid_time_formats
-)
-
 
 def clean_and_process_raw_fights_df(raw_fights_df: pd.DataFrame) -> pd.DataFrame:
     processed_fights_df = raw_fights_df.copy()

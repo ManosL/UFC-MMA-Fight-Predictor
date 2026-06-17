@@ -124,13 +124,14 @@ class EventSpider(scrapy.Spider):
 		self.crawler.stats.inc_value("events_parsed", 1)
 		self.crawler.stats.inc_value("fights_expected", len(rows))
 
-		for link in rows:
+		for i, link in enumerate(rows):
 			yield scrapy.Request(
 				url=link,
 				cookies=scrapy_cookies,
 				meta={
 					"event_date": response.meta.get('event_date'),
 					"fight_id": get_fight_id_from_url(link),
+					"fight_index_in_event": i + 1,
 				},
 				callback=self.fight_parse,
 			)
@@ -179,9 +180,17 @@ class EventSpider(scrapy.Spider):
 		
 		fight_id = response.meta.get('fight_id')
 		event_date = response.meta.get('event_date')
+		fight_index = response.meta.get('fight_index_in_event')
 		gender, title_fight, weight_class = process_bout_description(bout_desc)
 
-		fight_info.extend([fight_id, event_date, gender, weight_class, title_fight])
+		fight_info.extend([
+			fight_id, 
+			event_date, 
+			fight_index, 
+			gender, 
+			weight_class, 
+			title_fight
+		])
 
 		fighters = response.css('div.b-fight-details__persons.clearfix')
 		fighters = fighters.css('div.b-fight-details__person')

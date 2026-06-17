@@ -1,6 +1,7 @@
 INSERT INTO "raw_fight_stats"(
     "Fight_ID",
     "Date",
+    "Event_Index",
     "Gender",
     "Weight_Class",
     "Title_Fight",
@@ -44,6 +45,7 @@ INSERT INTO "raw_fight_stats"(
 SELECT
     new_fight_stats."Fight_ID",
     new_fight_stats."Date",
+    new_fight_stats."Event_Index",
     new_fight_stats."Gender",
     new_fight_stats."Weight_Class",
     new_fight_stats."Title_Fight",

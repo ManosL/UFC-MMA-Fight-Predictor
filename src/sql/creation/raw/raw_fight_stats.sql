@@ -3,6 +3,7 @@ DROP TABLE IF EXISTS raw_fight_stats CASCADE;
 CREATE TABLE raw_fight_stats(
     "Fight_ID"                              VARCHAR(50),
     "Date"                                  DATE,
+    "Event_Index"                           INTEGER,
     "Gender"                                VARCHAR(10),
     "Weight_Class"                          VARCHAR(100),
     "Title_Fight"                           BOOLEAN,

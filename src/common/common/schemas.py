@@ -5,9 +5,9 @@ CRAWLED_FIGHTER_COLUMNS = [
 ]
 
 __CRAWLED_FIGHT_COMMON_COLUMNS = [
-    'Fight_ID', 'Fight Date', 'Gender', 
-    'Weight Class', 'Title Fight', 'Result', 
-    'Method', 'Round', 'Time', 'Fight Time Format'
+    'Fight_ID', 'Fight Date', 'Fight Index', 'Gender', 
+    'Weight Class', 'Title Fight', 'Result', 'Method', 
+    'Round', 'Time', 'Fight Time Format'
 ]
 
 __CRAWLED_FIGHT_FIGHTER_COLUMNS = [

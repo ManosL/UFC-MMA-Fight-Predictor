@@ -72,6 +72,7 @@ common_fight_stats AS (
     SELECT
         "Fight_ID",
         "Date",
+        "Event_Index",
         "Gender",
         "Weight_Class",
         "Title_Fight",
@@ -90,42 +91,58 @@ fighters_running_sum_stats AS (
         fighter_fight_stats."Fighter_Corner",
         COUNT(1) OVER (
             PARTITION BY fighter_fight_stats."Fighter_ID"
-            ORDER BY common_fight_stats."Date" ASC
+            ORDER BY 
+                common_fight_stats."Date" ASC, 
+                common_fight_stats."Event_Index" DESC
             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
         ) AS "Total_UFC_Fights",
         SUM(common_fight_stats."Duration_Mins") OVER (
             PARTITION BY fighter_fight_stats."Fighter_ID"
-            ORDER BY common_fight_stats."Date" ASC
+            ORDER BY
+                common_fight_stats."Date" ASC, 
+                common_fight_stats."Event_Index" DESC
             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
         ) AS "Total_Fighting_Minutes",
         SUM(fighter_fight_stats."Fighter_Sign.Strikes_Done") OVER (
             PARTITION BY fighter_fight_stats."Fighter_ID"
-            ORDER BY common_fight_stats."Date" ASC
+            ORDER BY
+                common_fight_stats."Date" ASC, 
+                common_fight_stats."Event_Index" DESC
             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
         ) AS "Total_Sign.Strikes_Done",
         SUM(fighter_fight_stats."Fighter_Sign.Strikes_Attempted") OVER (
             PARTITION BY fighter_fight_stats."Fighter_ID"
-            ORDER BY common_fight_stats."Date" ASC
+            ORDER BY
+                common_fight_stats."Date" ASC, 
+                common_fight_stats."Event_Index" DESC
             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
         ) AS "Total_Sign.Strikes_Attempted",
         SUM(opponent_fight_stats."Fighter_Sign.Strikes_Done") OVER (
             PARTITION BY fighter_fight_stats."Fighter_ID"
-            ORDER BY common_fight_stats."Date" ASC
+            ORDER BY
+                common_fight_stats."Date" ASC, 
+                common_fight_stats."Event_Index" DESC
             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
         ) AS "Total_Sign.Strikes_Absorbed",
         SUM(opponent_fight_stats."Fighter_Sign.Strikes_Attempted") OVER (
             PARTITION BY fighter_fight_stats."Fighter_ID"
-            ORDER BY common_fight_stats."Date" ASC
+            ORDER BY
+                common_fight_stats."Date" ASC, 
+                common_fight_stats."Event_Index" DESC
             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
         ) AS "Total_Sign.Strikes_Opponent_Attempted",
         SUM(fighter_fight_stats."Fighter_Takedowns_Done") OVER (
             PARTITION BY fighter_fight_stats."Fighter_ID"
-            ORDER BY common_fight_stats."Date" ASC
+            ORDER BY
+                common_fight_stats."Date" ASC, 
+                common_fight_stats."Event_Index" DESC
             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
         ) AS "Total_Takedowns_Done",
         SUM(fighter_fight_stats."Fighter_Takedowns_Attempted") OVER (
             PARTITION BY fighter_fight_stats."Fighter_ID"
-            ORDER BY common_fight_stats."Date" ASC
+            ORDER BY
+                common_fight_stats."Date" ASC, 
+                common_fight_stats."Event_Index" DESC
             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
         ) AS "Total_Takedowns_Attempted",
         SUM(opponent_fight_stats."Fighter_Takedowns_Done") OVER (
@@ -135,12 +152,16 @@ fighters_running_sum_stats AS (
         ) AS "Total_Takedowns_Absorbed",
         SUM(opponent_fight_stats."Fighter_Takedowns_Attempted") OVER (
             PARTITION BY fighter_fight_stats."Fighter_ID"
-            ORDER BY common_fight_stats."Date" ASC
+            ORDER BY
+                common_fight_stats."Date" ASC, 
+                common_fight_stats."Event_Index" DESC
             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
         ) AS "Total_Takedowns_Opponent_Attempted",
         SUM(fighter_fight_stats."Fighter_Submission_Attempts") OVER (
             PARTITION BY fighter_fight_stats."Fighter_ID"
-            ORDER BY common_fight_stats."Date" ASC
+            ORDER BY
+                common_fight_stats."Date" ASC, 
+                common_fight_stats."Event_Index" DESC
             ROWS BETWEEN UNBOUNDED PRECEDING AND 1 PRECEDING
         ) AS "Total_Submissions_Attempts"
     FROM
@@ -155,6 +176,7 @@ fighters_stats_before_fights AS (
     SELECT
         common_fight_stats."Fight_ID" AS "Fight_ID",
         common_fight_stats."Date" AS "Fight_Date",
+        common_fight_stats."Event_Index" AS "Event_Index",
         raw_fighters_current_stats."ID" AS "DIM_Fighter_ID",
         raw_fighters_current_stats."Name" AS "DIM_Fighter_Name",
         raw_fighters_current_stats."Gender" AS "Gender",
@@ -167,7 +189,9 @@ fighters_stats_before_fights AS (
         )
         OVER (
             PARTITION BY fighters_running_sum_stats."Fighter_ID"
-            ORDER BY common_fight_stats."Date" DESC
+            ORDER BY 
+                common_fight_stats."Date" DESC,
+                common_fight_stats."Event_Index" ASC
         ) AS "DIM_Fighter_Wins",
         raw_fighters_current_stats."Loses" -
         SUM(
@@ -178,7 +202,9 @@ fighters_stats_before_fights AS (
         )
         OVER (
             PARTITION BY fighters_running_sum_stats."Fighter_ID"
-            ORDER BY common_fight_stats."Date" DESC
+            ORDER BY
+                common_fight_stats."Date" DESC,
+                common_fight_stats."Event_Index" ASC
         ) AS "DIM_Fighter_Loses",
         raw_fighters_current_stats."Draws" -
         SUM(
@@ -188,7 +214,9 @@ fighters_stats_before_fights AS (
         )
         OVER (
             PARTITION BY fighters_running_sum_stats."Fighter_ID"
-            ORDER BY common_fight_stats."Date" DESC
+            ORDER BY
+                common_fight_stats."Date" DESC,
+                common_fight_stats."Event_Index" ASC
         ) AS "DIM_Fighter_Draws",
         COALESCE(
             fighters_running_sum_stats."Total_Fighting_Minutes",
@@ -311,8 +339,9 @@ fighters_stats_before_fights AS (
             fighters_running_sum_stats."Fighter_ID" = raw_fighters_current_stats."ID"
 ),
 -- This is done in order to fix the case a fighter fights more than once in the same
--- day where we keep his stats before his first fight of that day. This happens
--- before many years therefore it's not worth doing something more elegant.
+-- day where we keep his stats before his first fight of that day. I think it's a
+-- good solution because the fighter does not actually improves in a single day...
+-- Also I don't have features like "how many times fought in same day"
 fighters_stats_before_fights_removed_duplicates AS (
     SELECT DISTINCT ON ("Fight_Date", "DIM_Fighter_ID")
         "Fight_Date",
@@ -342,7 +371,7 @@ fighters_stats_before_fights_removed_duplicates AS (
     ORDER BY
         "Fight_Date" ASC,
         "DIM_Fighter_ID" ASC,
-        "Fight_ID" ASC
+        "Event_Index" DESC
 ),
 fighters_current_stats AS (
     SELECT
