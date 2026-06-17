@@ -311,8 +311,8 @@ fighters_stats_before_fights AS (
             fighters_running_sum_stats."Fighter_ID" = raw_fighters_current_stats."ID"
 ),
 -- This is done in order to fix the case a fighter fights more than once in the same
--- day where we keep his stats before his first fight of that day. This happens only
--- once and before many years therefore it's not worth doing something more elegant.
+-- day where we keep his stats before his first fight of that day. This happens
+-- before many years therefore it's not worth doing something more elegant.
 fighters_stats_before_fights_removed_duplicates AS (
     SELECT DISTINCT ON ("Fight_Date", "DIM_Fighter_ID")
         "Fight_Date",

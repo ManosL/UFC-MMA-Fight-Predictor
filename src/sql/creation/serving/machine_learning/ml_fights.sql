@@ -77,4 +77,10 @@ FROM
     INNER JOIN "DIM_Fighter" dim_fighter_1
         ON fact_fight_fighter_stats_1."FACT_Fight_Fighter_Stats_Fighter_Key" = dim_fighter_1."DIM_Fighter_Key"
     INNER JOIN "DIM_Fighter" dim_fighter_2
-        ON fact_fight_fighter_stats_2."FACT_Fight_Fighter_Stats_Fighter_Key" = dim_fighter_2."DIM_Fighter_Key";
+        ON fact_fight_fighter_stats_2."FACT_Fight_Fighter_Stats_Fighter_Key" = dim_fighter_2."DIM_Fighter_Key"
+WHERE
+    dim_fight_time_format."DIM_Fight_Time_Format_Name" IN (
+        '3Rnd(5-5-5)',
+        '5Rnd(5-5-5-5-5)',
+        '3Rnd+OT(5-5-5-5)'
+    );

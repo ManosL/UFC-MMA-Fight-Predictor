@@ -6,7 +6,8 @@ from common.psycopg_utils import get_postgres_connection
 
 from constants import (
     PROCESSED_FIGHT_STATS_FILENAME,
-    PROCESSED_FIGHTER_STATS_FILENAME
+    PROCESSED_FIGHTER_STATS_FILENAME,
+    get_fight_df_integer_columns,
 )
 
 from helpers.io import (
@@ -33,7 +34,12 @@ def main(version_id: str) -> int:
     for filename, table_name in zip(files_to_load, tables_to_load_to):
         table_creation_file_path = f'/opt/airflow/sql/creation/raw/{table_name}.sql'
 
-        df = retrieve_df_from_csv(filename)
+        read_kwargs = {}
+
+        if table_name == "new_fight_stats":
+            read_kwargs = {"dtype": {col: "Int64" for col in get_fight_df_integer_columns()}}
+
+        df = retrieve_df_from_csv(filename, read_kwargs)
 
         print(df.head(10))
 

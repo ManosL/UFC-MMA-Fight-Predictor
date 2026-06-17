@@ -1,5 +1,6 @@
 import os
 import pandas as pd
+from typing import Any
 
 from common.minio_utils import MinioClient
 
@@ -18,17 +19,25 @@ def get_minio_bucket_name() -> str:
 
 
 def retrieve_df_from_csv(
-    filename: str
+    filename: str,
+    extra_read_kwargs: dict[str, Any] | None = None
 ) -> pd.DataFrame:
     minio_client = get_minio_client()
 
     bucket_name = get_minio_bucket_name()
 
+    read_kwargs = {
+        "sep": "|",
+        "header": 0
+    }
+
+    if extra_read_kwargs:
+        read_kwargs = read_kwargs | extra_read_kwargs
+
     df = minio_client.read_csv_to_pandas(
         bucket_name,
         filename,
-        sep='|',
-        header=0
+        **read_kwargs
     )
 
     return df
