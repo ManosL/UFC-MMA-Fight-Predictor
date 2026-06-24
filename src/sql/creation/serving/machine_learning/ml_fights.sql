@@ -83,4 +83,5 @@ WHERE
         '3Rnd(5-5-5)',
         '5Rnd(5-5-5-5-5)',
         '3Rnd+OT(5-5-5-5)'
-    );
+    ) AND
+    dim_date."DIM_Date_Year" >= 2000 ;
