@@ -81,6 +81,7 @@ def get_full_crawl_task_flow() -> BaseOperator:
         },
         requirements=[
             "minio",
+            "common @ file:///opt/airflow/common",
         ],
         system_site_packages=False,  # important: isolate from Airflow deps
     )
@@ -112,6 +113,7 @@ def get_full_crawl_task_flow() -> BaseOperator:
         },
         requirements=[
             "minio",
+            "common @ file:///opt/airflow/common",
         ],
         system_site_packages=False,  # important: isolate from Airflow deps
     )
@@ -156,6 +158,7 @@ def get_incremental_crawl_task_flow() -> BaseOperator:
         },
         requirements=[
             "minio",
+            "common @ file:///opt/airflow/common",
         ],
         system_site_packages=False,  # important: isolate from Airflow deps
     )
@@ -187,6 +190,7 @@ def get_incremental_crawl_task_flow() -> BaseOperator:
         },
         requirements=[
             "minio",
+            "common @ file:///opt/airflow/common",
         ],
         system_site_packages=False,  # important: isolate from Airflow deps
     )

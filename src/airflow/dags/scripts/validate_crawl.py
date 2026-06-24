@@ -3,35 +3,12 @@ from minio import Minio
 from typing import Any
 import json
 
+from common.minio_utils import MinioClient
+
 
 class CrawlingException(Exception):
     pass
 
-def get_minio_client() -> Minio:
-    minio_client = Minio(
-        'minio:9000',
-        access_key=os.environ.get('MINIO_USERNAME'),
-        secret_key=os.environ.get('MINIO_PASSWORD'),
-        secure=False
-    )
-
-    return minio_client
-
-def read_json_from_minio(
-    minio_client: Minio,
-    bucket_name: str,
-    file_name: str
-) -> dict[str, Any]:
-    response = minio_client.get_object(bucket_name, file_name)
-
-    # read into pandas
-    json_obj = json.loads(response.read().decode("utf-8"))
-
-    # close the response
-    response.close()
-    response.release_conn()
-
-    return json_obj
 
 def validate_events_crawl(stats: dict[str, Any]) -> None:
     log_file_msg = f"Check logs at {stats['log_file_url']}"
@@ -61,9 +38,14 @@ def validate_crawl(
     bucket_name: str,
     version_id: str
 ) -> None:
-    minio_client = get_minio_client()
+    minio_client = MinioClient(
+        'minio:9000',
+        access_key=os.environ.get('MINIO_USERNAME'),
+        secret_key=os.environ.get('MINIO_PASSWORD'),
+        secure=False
+    )
 
-    stats = read_json_from_minio(minio_client, bucket_name, f"{version_id}.log")
+    stats = minio_client.read_json_from_minio(bucket_name, f"{version_id}.log")
 
     if spider_name == "event_spider":
         validate_events_crawl(stats)

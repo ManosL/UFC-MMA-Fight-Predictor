@@ -37,6 +37,22 @@ class MinioClient(Minio):
         return df
 
 
+    def read_json_from_minio(
+        self: Minio,
+        bucket_name: str,
+        file_name: str
+    ) -> dict[str, Any]:
+        response = self.get_object(bucket_name, file_name)
+
+        json_obj = json.loads(response.read().decode("utf-8"))
+
+        # close the response
+        response.close()
+        response.release_conn()
+
+        return json_obj
+
+
     def write_pandas_df_as_csv(
         self: Minio,
         bucket_name: str,
