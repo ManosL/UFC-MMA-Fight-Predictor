@@ -40,8 +40,6 @@ class BaseCSVPipeline:
 
         self.bucket_name = os.environ.get('MINIO_RAW_DATA_BUCKET_NAME')
 
-        self.minio_client.create_bucket(self.bucket_name)
-
         version_id = self.__extract_version_id(spider)
         self.output_minio_path = os.path.join(version_id, self.output_file_name)
 

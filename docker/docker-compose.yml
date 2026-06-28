@@ -18,6 +18,25 @@ services:
       timeout: 3s
       retries: 20
 
+  create-buckets:
+    image: minio/mc:latest
+    container_name: mlflow-create-buckets
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        mc alias set myminio "http://minio:9000" \
+          "${MINIO_USERNAME}" "${MINIO_PASSWORD}"
+        mc mb --ignore-existing "myminio/${MINIO_MLFLOW_BUCKET_NAME:-mlflow}"
+        mc mb --ignore-existing "myminio/${MINIO_RAW_DATA_BUCKET_NAME:-crawleddata}"
+        mc mb --ignore-existing "myminio/${MINIO_EVENT_CRAWL_LOGS_BUCKET_NAME:-eventcrawlinglogs}"
+        mc mb --ignore-existing "myminio/${MINIO_FIGHTER_CRAWL_LOGS_BUCKET_NAME:-fightercrawlinglogs}"
+        mc mb --ignore-existing "myminio/${MINIO_ML_TRAINING_DATA_BUCKET_NAME:-mltrainingdata}"
+    restart: "no"
+
   postgres-1:
     image: postgres:17
     restart: on-failure
@@ -50,6 +69,9 @@ services:
 
   scrapy-server:
     image: flik007/scrapyd-server:latest
+    depends_on:
+      create-buckets:
+        condition: service_completed_successfully
     env_file:
       - .env
     environment:
@@ -78,6 +100,9 @@ services:
       - ../src/processing:/workspace
       - ../src/sql:/workspace/sql/
       - pip-cache:/root/.cache/pip   # speed up pip installs
+    depends_on:
+      create-buckets:
+        condition: service_completed_successfully
     env_file:
       - .env
     environment:
@@ -109,6 +134,9 @@ services:
       - ../src/machine_learning:/workspace
       - ../src/machine_learning/results:/workspace/results
       - pip-cache:/root/.cache/pip   # speed up pip installs
+    depends_on:
+      create-buckets:
+        condition: service_completed_successfully
     env_file:
       - .env
     environment:
@@ -149,21 +177,6 @@ services:
       timeout: 3s
       retries: 10
 
-  create-bucket:
-    image: minio/mc:latest
-    container_name: mlflow-create-bucket
-    depends_on:
-      minio:
-        condition: service_healthy
-    entrypoint:
-      - /bin/sh
-      - -c
-      - |
-        mc alias set myminio "http://minio:9000" \
-          "${MINIO_USERNAME}" "${MINIO_PASSWORD}"
-        mc mb --ignore-existing "myminio/${MINIO_MLFLOW_BUCKET_NAME:-mlflow}"
-    restart: "no"
-
   mlflow:
     image: ghcr.io/mlflow/mlflow:latest
     container_name: mlflow-server
@@ -172,7 +185,7 @@ services:
         condition: service_healthy
       minio:
         condition: service_healthy
-      create-bucket:
+      create-buckets:
         condition: service_completed_successfully
     env_file:
       - .env
