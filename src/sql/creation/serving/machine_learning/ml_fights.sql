@@ -84,4 +84,5 @@ WHERE
         '5Rnd(5-5-5-5-5)',
         '3Rnd+OT(5-5-5-5)'
     ) AND
-    dim_date."DIM_Date_Year" >= 2000 ;
+    dim_date."DIM_Date_Year" >= 2000 AND
+    dim_result."DIM_Result_Name" IN ('win', 'lose', 'draw');

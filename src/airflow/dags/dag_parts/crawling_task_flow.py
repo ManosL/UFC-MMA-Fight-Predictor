@@ -202,6 +202,7 @@ def get_incremental_crawl_task_flow() -> BaseOperator:
     crawl_fighters_task >> validate_fighters_crawl_task >>end_task
     return start_task
 
+
 def get_crawling_task_flow(
         incremental_start_task_id="crawl_data.incremental_crawl_start",
         full_start_task_id="crawl_data.full_crawl_start"

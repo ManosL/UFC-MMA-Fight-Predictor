@@ -8,16 +8,16 @@ from constants import (
     PROCESSED_FIGHTER_STATS_FILENAME
 )
 
-from helpers.gender_resolution import (
+from processing_helpers.gender_resolution import (
     resolve_fighter_gender
 )
 
-from helpers.io import (
+from processing_helpers.io import (
     retrieve_df_from_csv,
     write_resulting_csv
 )
 
-from helpers.transform import (
+from processing_helpers.transform import (
     normalize_no_val_to_nan,
     convert_percentage_features_to_decimals,
     convert_feet_and_inches_to_cm,

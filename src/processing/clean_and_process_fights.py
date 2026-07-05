@@ -7,15 +7,15 @@ from constants import (
     PROCESSED_FIGHT_STATS_FILENAME
 )
 
-from helpers.gender_resolution import (
+from processing_helpers.gender_resolution import (
     resolve_fight_gender
 )
 
-from helpers.io import (
+from processing_helpers.io import (
     retrieve_df_from_csv,
     write_resulting_csv
 )
-from helpers.transform import (
+from processing_helpers.transform import (
     normalize_no_val_to_nan,
     convert_end_time_in_total_fight_mins
 )
