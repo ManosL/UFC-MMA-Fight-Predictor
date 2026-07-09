@@ -19,6 +19,14 @@ class MinioClient(Minio):
         return message
 
 
+    def list_bucket_directory(self: Minio, bucket_name: str, dir_path: str) -> list[Any]:
+        return self.list_objects(
+            bucket_name, 
+            recursive=True, 
+            prefix=dir_path
+        )
+
+
     def read_csv_to_pandas(
         self: Minio,
         bucket_name: str,
@@ -58,6 +66,7 @@ class MinioClient(Minio):
         bucket_name: str,
         file_name: str,
         df: pd.DataFrame,
+        metadata: dict[str, Any] | None = None,
         **to_csv_kwargs: Any
     ) -> None:
         csv_buffer = BytesIO()
@@ -71,7 +80,8 @@ class MinioClient(Minio):
             file_name,
             data=csv_buffer,
             length=len(csv_buffer.getvalue()),
-            content_type="application/csv"
+            content_type="application/csv",
+            metadata=metadata
         )
 
         return
@@ -81,7 +91,8 @@ class MinioClient(Minio):
         self: Minio,
         bucket_name: str,
         file_name: str,
-        json_obj: dict[str, Any]
+        json_obj: dict[str, Any],
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         json_buffer = BytesIO(json.dumps(json_obj).encode("utf-8"))
 
@@ -93,7 +104,8 @@ class MinioClient(Minio):
             file_name,
             data=json_buffer,
             length=len(json_buffer.getvalue()),
-            content_type="application/json"
+            content_type="application/json",
+            metadata=metadata
         )
 
         return
@@ -102,12 +114,14 @@ class MinioClient(Minio):
         self: Minio,
         bucket_name: str,
         src_file_name: str,
-        dst_file_name: str
+        dst_file_name: str,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         self.fput_object(
             bucket_name,
             dst_file_name,
-            src_file_name
+            src_file_name,
+            metadata=metadata
         )
 
         return
