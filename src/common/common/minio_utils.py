@@ -19,11 +19,16 @@ class MinioClient(Minio):
         return message
 
 
-    def list_bucket_directory(self: Minio, bucket_name: str, dir_path: str) -> list[Any]:
+    def list_bucket_directory(
+        self: Minio, 
+        bucket_name: str, 
+        dir_path: str,
+        **list_objects_kwargs: Any,
+    ) -> list[Any]:
         return self.list_objects(
             bucket_name, 
-            recursive=True, 
-            prefix=dir_path
+            prefix=dir_path,
+            **list_objects_kwargs
         )
 
 

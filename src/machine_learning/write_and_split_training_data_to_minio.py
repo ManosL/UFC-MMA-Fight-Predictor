@@ -8,6 +8,7 @@ from sklearn.model_selection import TimeSeriesSplit
 from common.minio_utils import MinioClient
 from common.psycopg_utils import get_postgres_connection
 
+from ml_helpers.io import ORIGINAL_DATA_DIR
 from ml_helpers.io import write_dataset_instance_to_minio
 
 
@@ -50,7 +51,7 @@ def main(
     write_dataset_instance_to_minio(
         minio_client,
         bucket_name,
-        os.path.join(ml_pipeline_run_id, "all"),
+        os.path.join(ml_pipeline_run_id, ORIGINAL_DATA_DIR, "all"),
         X_train=features,
         y_train=labels
     )
@@ -72,7 +73,7 @@ def main(
         write_dataset_instance_to_minio(
             minio_client,
             bucket_name,
-            os.path.join(ml_pipeline_run_id, "splits", f"split_{i+1}"),
+            os.path.join(ml_pipeline_run_id, ORIGINAL_DATA_DIR, "splits", f"split_{i+1}"),
             X_train=train_features,
             y_train=train_labels,
             X_test=test_features,

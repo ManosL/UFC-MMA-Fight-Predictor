@@ -24,10 +24,17 @@ def get_machine_learning_requirements() -> Sequence[str]:
     return requirements
 
 
-def write_and_split_training_data_to_minio_venv(ml_pipeline_run_id: str, folds: int) -> None:
+def write_and_split_training_data_to_minio_venv(ml_pipeline_run_id: str, folds: int,) -> None:
     from write_and_split_training_data_to_minio import main
 
     main(ml_pipeline_run_id, int(folds))
+    return
+
+
+def apply_preprocessing_and_feature_engineering_venv(ml_pipeline_run_id: str,) -> None:
+    from apply_preprocessing_and_feature_engineering import main
+
+    main(ml_pipeline_run_id)
     return
 
 
@@ -64,6 +71,18 @@ with DAG(
         system_site_packages=False,
     )
 
+    apply_preprocessing_and_feature_engineering_task = PythonVirtualenvOperator(
+        task_id="apply_preprocessing_and_feature_engineering",
+        python_callable=apply_preprocessing_and_feature_engineering_venv,
+        op_kwargs={
+            "ml_pipeline_run_id": "{{ ti.xcom_pull(task_ids='determine_version_id') or params.ml_pipeline_run_id }}"
+        },
+        requirements=ml_requirements,
+        system_site_packages=False,
+    )
+
     end_task = EmptyOperator(task_id="end_processing")
 
-    start_task >> determine_version_id_task >> write_and_split_training_data_to_minio_task >> end_task
+    start_task >> determine_version_id_task >> write_and_split_training_data_to_minio_task 
+    write_and_split_training_data_to_minio_task >> apply_preprocessing_and_feature_engineering_task
+    apply_preprocessing_and_feature_engineering_task >> end_task
