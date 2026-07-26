@@ -11,13 +11,10 @@ from common.psycopg_utils import get_postgres_connection
 from ml_helpers.io import ORIGINAL_DATA_DIR
 from ml_helpers.io import write_dataset_instance_to_minio
 
-
-FIGHT_DATE_COLUMN = "Fight_Date"
+from feature_extractors.constants import FIGHT_DATE_COLUMN, LABEL_COLUMNS, FIGHT_ID_COLUMN
 
 
 def read_fights_data() -> tuple[pd.DataFrame, pd.DataFrame]:
-    label_columns = ['Result', 'Method', 'Round', 'Time']
-
     postgres_connection = get_postgres_connection()
     query = "SELECT * FROM \"ML_Fights\""
 
@@ -27,14 +24,14 @@ def read_fights_data() -> tuple[pd.DataFrame, pd.DataFrame]:
 
     # Also writing in labels df the Fight_ID(the IDs in both datasets
     # are in the same order)
-    labels    = fights_df[['Fight_ID'] + label_columns]
-    features  = fights_df.drop(label_columns, axis=1)
+    labels    = fights_df[[FIGHT_ID_COLUMN] + LABEL_COLUMNS]
+    features  = fights_df.drop(LABEL_COLUMNS, axis=1)
 
     return features, labels
 
 
 def main(
-    ml_pipeline_run_id: str, 
+    ml_pipeline_run_id: str,
     k_folds: int
 ) -> int:
     minio_client = MinioClient(
@@ -57,7 +54,7 @@ def main(
     )
 
     time_series_cv = TimeSeriesSplit(n_splits=k_folds)
-    
+
     dates_series = np.sort(features[FIGHT_DATE_COLUMN].unique())
 
     for i, (train_dates_index, test_dates_index) in enumerate(time_series_cv.split(dates_series)):
@@ -85,7 +82,7 @@ def main(
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    
+
     parser.add_argument("--ml_pipeline_run_id", "-v", help="Machine Learning Pipeline Run ID")
     parser.add_argument("--folds", "-v", help="Number of folds in the TimeSeriesSplit")
     parser.parse_args()
