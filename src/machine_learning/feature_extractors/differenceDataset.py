@@ -2,6 +2,7 @@ from itertools import product
 from typing import Self
 
 import pandas as pd
+from pandas.api.types import is_numeric_dtype, is_bool_dtype
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.impute import SimpleImputer
 
@@ -18,10 +19,10 @@ from feature_extractors.constants import (
 class DifferenceDatasetTransformer(BaseEstimator, TransformerMixin):
     def __init__(
         self,
-        fighter_1_prefix: list[str] = FIGHTER_1_PREFIX,
-        fighter_2_prefix: list[str] = FIGHTER_2_PREFIX,
+        fighter_1_prefix: str = FIGHTER_1_PREFIX,
+        fighter_2_prefix: str = FIGHTER_2_PREFIX,
         to_difference_features: list[str] = PER_FIGHTER_NUMERIC_COLUMNS,
-        difference_features_suffix: list[str] = DIFFERENCE_FEATURES_SUFFIX,
+        difference_features_suffix: str = DIFFERENCE_FEATURES_SUFFIX,
     ) -> None:
         self.fighter_1_prefix = fighter_1_prefix
         self.fighter_2_prefix = fighter_2_prefix
@@ -68,6 +69,9 @@ class DifferenceDatasetTransformer(BaseEstimator, TransformerMixin):
     ) -> None:
         if feature_name not in df.columns:
             raise ValueError(f"Column {feature_name} does not exists in the given DataFrame. Columns: {df.columns}")
+
+        if not (is_numeric_dtype(df[feature_name]) and not is_bool_dtype(df[feature_name])):
+            raise ValueError(f"Column {feature_name} dis not numeric")
 
         nan_values_number = df[feature_name].isna().sum()
 

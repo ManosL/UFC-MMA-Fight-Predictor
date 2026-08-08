@@ -85,5 +85,5 @@ if __name__ == '__main__':
 
     parser.add_argument("--ml_pipeline_run_id", "-v", help="Machine Learning Pipeline Run ID")
     parser.add_argument("--folds", "-v", help="Number of folds in the TimeSeriesSplit")
-    parser.parse_args()
-    main(parser.ml_pipeline_run_id, parser.folds)
+    args = parser.parse_args()
+    main(args.ml_pipeline_run_id, args.folds)

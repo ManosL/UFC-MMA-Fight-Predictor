@@ -57,7 +57,7 @@ def main(version_id: str) -> int:
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    
+
     parser.add_argument("--version_id", "-v", help="Version ID")
-    parser.parse_args()
-    main(parser.version_id)
+    args = parser.parse_args()
+    main(args.version_id)

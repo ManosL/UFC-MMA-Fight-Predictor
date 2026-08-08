@@ -21,6 +21,15 @@ class DoubleDatasetTransformer(BaseEstimator, TransformerMixin):
         self.fighter_2_prefix = fighter_2_prefix
         self.to_swap_features = to_swap_features
 
+    def fit_transform(
+        self,
+        X: pd.DataFrame,
+        y: pd.Series | None = None,
+        *,
+        augment: bool = True,
+    ) -> pd.DataFrame:
+        return self.fit(X, y).transform(X, augment=augment)
+
     def fit(
         self: Self,
         X: pd.DataFrame,
@@ -32,7 +41,12 @@ class DoubleDatasetTransformer(BaseEstimator, TransformerMixin):
     def transform(
         self: Self,
         X: pd.DataFrame,
+        *,
+        augment: bool = False,
     ) -> pd.DataFrame:
+        if not augment:
+            return X.copy()
+
         if X[X["Fight_ID"].str.endswith("_doubled")].count().iloc[0] > 0:
             raise ValueError("Seems that the given dataset has already been doubled...")
 
