@@ -20,16 +20,31 @@ class MinioClient(Minio):
 
 
     def list_bucket_directory(
-        self: Minio, 
-        bucket_name: str, 
+        self: Minio,
+        bucket_name: str,
         dir_path: str,
         **list_objects_kwargs: Any,
     ) -> list[Any]:
         return self.list_objects(
-            bucket_name, 
+            bucket_name,
             prefix=dir_path,
             **list_objects_kwargs
         )
+
+
+    def read_pickle_from_minio(
+        self,
+        bucket_name: str,
+        file_name: str,
+    ) -> Any:
+        response = self.get_object(bucket_name, file_name)
+
+        try:
+            buffer = BytesIO(response.read())
+            return pd.read_pickle(buffer)
+        finally:
+            response.close()
+            response.release_conn()
 
 
     def read_csv_to_pandas(

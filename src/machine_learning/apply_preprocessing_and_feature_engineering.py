@@ -50,7 +50,7 @@ from feature_extractors.constants import (
 
 def main(
     ml_pipeline_run_id: str,
-) -> int:
+) -> list[str]:
     minio_client = MinioClient(
         'minio:9000',
         access_key=os.environ.get('MINIO_USERNAME'),
@@ -63,7 +63,6 @@ def main(
     # TODO: THINK OF DOING IT IN AIRFLOW IN ORDER TO HAVE THEM DONE IN PARALLEL
     # OR DO IT INSIDE THE SCRIPT IN PARALLEL
     feature_extractors = [
-        # TODO: VERIFY IT WORKS
         (
             "GeneralProcessing",
             build_pipeline(
@@ -177,7 +176,7 @@ def main(
                 y_test=extractor_y_test
             )
 
-    return 0
+    return [extractor_name for extractor_name, _ in feature_extractors]
 
 
 def build_pipeline(

@@ -1,6 +1,8 @@
 import os
 from itertools import product
 import pandas as pd
+import pickle
+from sklearn.base import TransformerMixin
 
 from common.minio_utils import MinioClient
 
@@ -13,8 +15,11 @@ TEST_FILES_DIR = "test"
 FEATURES_FILE_NAME = "features"
 LABELS_FILE_NAME = "labels"
 
+FOLDS_PREFIX = "split_"
+FEATURE_EXTRACTOR_FILE_NAME = "extractor.pkl"
 
-def __extract_basename_from_path(path: str) -> str:
+
+def extract_basename_from_path(path: str) -> str:
     return os.path.basename(os.path.normpath(path))
 
 
@@ -35,7 +40,7 @@ def read_dataset_instance_from_minio(
         root_path,
         recursive=False
     )
-    root_folder_dirs = [__extract_basename_from_path(obj._object_name) for obj in root_folder_dirs]
+    root_folder_dirs = [extract_basename_from_path(obj._object_name) for obj in root_folder_dirs]
 
     if TRAIN_FILES_DIR not in root_folder_dirs:
         raise FileNotFoundError(f"{TRAIN_FILES_DIR} directory does not exists in {root_path}.")
@@ -99,7 +104,7 @@ def write_dataset_instance_to_minio(
     if (X_train.shape[0] != y_train.shape[0]) or \
         (X_test is not None and (X_test.shape[0] != y_test.shape[0])):
         raise ValueError("Features and Labels cannot have different number of rows")
-    
+
     if X_test is None:
         to_save_dfs = to_save_dfs[:2]
         to_save_dfs_metadata = to_save_dfs_metadata[:2]
@@ -108,8 +113,8 @@ def write_dataset_instance_to_minio(
         minio_client.write_pandas_df_as_csv(
             bucket_name,
             os.path.join(
-                root_path, 
-                df_metadata["usage"], 
+                root_path,
+                df_metadata["usage"],
                 f"{df_metadata['content']}.csv"
             ),
             df,
@@ -120,3 +125,53 @@ def write_dataset_instance_to_minio(
         )
 
     return
+
+
+def read_folds_from_dataset_instance(
+    minio_client: MinioClient,
+    bucket_name: str,
+    folds_dir_path: str,
+) -> list[dict[str, pd.DataFrame | None]]:
+    splits = []
+
+    data_folders_paths = [
+        obj._object_name
+        for obj in minio_client.list_bucket_directory(
+            bucket_name,
+            folds_dir_path,
+            recursive=False
+        )
+    ]
+
+    data_folders_paths = sorted(
+        data_folders_paths,
+        key=lambda path: int(extract_basename_from_path(path).split('_')[1])
+    )
+
+    for path in data_folders_paths:
+        assert extract_basename_from_path(path).startswith(FOLDS_PREFIX)
+
+        position = int(extract_basename_from_path(path).split('_')[1])
+
+        splits.append(
+            read_dataset_instance_from_minio(
+                minio_client,
+                bucket_name,
+                path
+            )
+        )
+
+    return splits
+
+
+def read_feature_extractor_from_dataset_instance(
+    minio_client: MinioClient,
+    bucket_name: str,
+    root_path: str,
+) -> TransformerMixin:
+    extractor_pickle_file_path = os.path.join(root_path, FEATURE_EXTRACTOR_FILE_NAME)
+
+    return minio_client.read_pickle_from_minio(
+        bucket_name,
+        extractor_pickle_file_path,
+    )

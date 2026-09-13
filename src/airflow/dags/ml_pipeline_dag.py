@@ -31,10 +31,28 @@ def write_and_split_training_data_to_minio_venv(ml_pipeline_run_id: str, folds: 
     return
 
 
-def apply_preprocessing_and_feature_engineering_venv(ml_pipeline_run_id: str,) -> None:
+def apply_preprocessing_and_feature_engineering_venv(
+    ml_pipeline_run_id: str,
+    mlflow_experiment_name: str
+) -> list[dict]:
     from apply_preprocessing_and_feature_engineering import main
+    fixed_kwargs = {
+        "ml_pipeline_run_id": ml_pipeline_run_id,
+        "mlflow_experiment_name": mlflow_experiment_name,
+    }
 
-    main(ml_pipeline_run_id)
+    extractor_names = main(ml_pipeline_run_id)
+    return [fixed_kwargs | {"feature_extractor_name": name} for name in extractor_names]
+
+
+def run_and_log_mlflow_experiments_for_extractor_venv(
+    ml_pipeline_run_id: str,
+    feature_extractor_name: str,
+    mlflow_experiment_name: str,
+) -> None:
+    from run_and_log_mlflow_experiments import main
+
+    main(ml_pipeline_run_id, feature_extractor_name, mlflow_experiment_name)
     return
 
 
@@ -43,6 +61,7 @@ with DAG(
     params={
         "ml_pipeline_run_id": Param("", type=["null", "string"]),
         "folds": Param(5, type="integer"),
+        "mlflow_experiment_name": Param("", type=["null", "string"]),
     },
     start_date=datetime(2025, 1, 1),
     schedule=None,
@@ -75,14 +94,25 @@ with DAG(
         task_id="apply_preprocessing_and_feature_engineering",
         python_callable=apply_preprocessing_and_feature_engineering_venv,
         op_kwargs={
-            "ml_pipeline_run_id": "{{ ti.xcom_pull(task_ids='determine_version_id') or params.ml_pipeline_run_id }}"
+            "ml_pipeline_run_id": "{{ ti.xcom_pull(task_ids='determine_version_id') or params.ml_pipeline_run_id }}",
+            "mlflow_experiment_name": "{{ ti.xcom_pull(task_ids='determine_version_id') or params.mlflow_experiment_name }}"
         },
         requirements=ml_requirements,
         system_site_packages=False,
     )
 
+    run_and_log_mlflow_experiments_task = PythonVirtualenvOperator.partial(
+        task_id="run_and_log_mlflow_experiments",
+        python_callable=run_and_log_mlflow_experiments_for_extractor_venv,
+        requirements=ml_requirements,
+        system_site_packages=False,
+    ).expand(
+        op_kwargs=apply_preprocessing_and_feature_engineering_task.output
+    )
+
     end_task = EmptyOperator(task_id="end_processing")
 
-    start_task >> determine_version_id_task >> write_and_split_training_data_to_minio_task 
+    start_task >> determine_version_id_task >> write_and_split_training_data_to_minio_task
     write_and_split_training_data_to_minio_task >> apply_preprocessing_and_feature_engineering_task
-    apply_preprocessing_and_feature_engineering_task >> end_task
+    apply_preprocessing_and_feature_engineering_task >> run_and_log_mlflow_experiments_task
+    run_and_log_mlflow_experiments_task >> end_task
