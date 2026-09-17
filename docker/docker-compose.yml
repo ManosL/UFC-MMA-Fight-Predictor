@@ -1,6 +1,6 @@
 services:
   minio:
-    image: minio/minio
+    image: quay.io/minio/minio
     env_file:
       - .env
     environment:
@@ -19,7 +19,7 @@ services:
       retries: 20
 
   create-buckets:
-    image: minio/mc:latest
+    image: quay.io/minio/mc:latest
     container_name: mlflow-create-buckets
     depends_on:
       minio:
