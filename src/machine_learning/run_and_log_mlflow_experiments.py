@@ -1,6 +1,7 @@
 import sys
 import os
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import itertools
 import mlflow
 
@@ -33,6 +34,7 @@ TRUSTED_TYPES = [
     'feature_extractors.differenceDataset.DifferenceDatasetTransformer',
     'feature_extractors.dropColumns.DropColumnsTransformer',
     'feature_extractors.minMaxScalerWrapper.MinMaxScalerWrapper',
+    'sklearn.tree._tree.Tree',
     'numpy.dtype',
 ]
 
@@ -110,6 +112,7 @@ def main(
     print(f"ML Pipeline Run ID: {ml_pipeline_run_id}")
     print(f"Feature Extractor Name: {feature_extractor_name}")
     print(f"Experiment Name: {experiment_name}")
+    print(f"Experiment ID: {experiment.experiment_id}")
     sys.stdout.flush()
 
     processed_data_dir_path = os.path.join(ml_pipeline_run_id, feature_extractor_name)
@@ -144,67 +147,47 @@ def main(
             for values in itertools.product(*clf_hyperparameters_array.values())
         ]
 
-        for experiment in hyperparameters_experiments:
-            run_name = __get_clf_str_repr(clf_ref, experiment)
+        for curr_hyperparameters in hyperparameters_experiments:
+            run_name = __get_clf_str_repr(clf_ref, curr_hyperparameters)
             run_name = f"{feature_extractor_name} + {run_name}"
 
             with mlflow.start_run(
                 run_name=run_name,
-                experiment_id=experiment["experiment_id"]
-            ):
-                print(f"Started {run_name}")
+                experiment_id=experiment.experiment_id
+            ) as parent_run:
+                parent_run_id = parent_run.info.run_id
+
+                print(f"Started {run_name} with id {parent_run_id}")
+
                 mlflow.log_params({
                     "feature_extractor": feature_extractor_name,
                     "classifier": clf_ref.__name__,
                 })
                 sys.stdout.flush()
-                clf_object = clf_ref(**experiment)
 
-                train_accuracy_scores = []
-                val_accuracy_scores = []
+                fold_experiments_args = [
+                    (
+                        clf_ref,
+                        curr_hyperparameters,
+                        parent_run_id,
+                        i+1,
+                        fold
+                    ) for i, fold in enumerate(folds)
+                ]
 
-                for i, fold in enumerate(folds):
-                    with mlflow.start_run(
-                        run_name=f"fold_{i+1}",
-                        experiment_id=experiment["experiment_id"],
-                        nested=True
-                    ):
-                        train_ids, test_ids, X_train, X_test, y_train, y_test = fold
+                results = [run_fold_experiment(*curr_args) for curr_args in fold_experiments_args]
 
-                        clf_object.fit(X_train, y_train)
-                        train_predictions = clf_object.predict(X_train)
-                        test_predictions = clf_object.predict(X_test)
-
-                        train_accuracy = accuracy_score(y_train, train_predictions)
-                        val_accuracy = accuracy_score(y_test, test_predictions)
-
-                        log_detailed_results(
-                            train_ids,
-                            y_train,
-                            train_predictions,
-                            "train.csv"
-                        )
-
-                        log_detailed_results(
-                            test_ids,
-                            y_test,
-                            test_predictions,
-                            "test.csv"
-                        )
-
-                        mlflow.log_metric("train_accuracy", train_accuracy)
-                        mlflow.log_metric("val_accuracy", val_accuracy)
-
-                        train_accuracy_scores.append(train_accuracy)
-                        val_accuracy_scores.append(val_accuracy)
+                train_accuracy_scores = [r[0] for r in results]
+                val_accuracy_scores = [r[1] for r in results]
 
                 _, _, X_train, X_test, y_train, y_test = all_data
 
+                clf_object = clf_ref(**curr_hyperparameters)
                 clf_object.fit(X_train, y_train)
 
                 # TODO: MAYBE UNIFY THEM IN A SINGLE PIPELINE
                 mlflow.sklearn.log_model(sk_model=extractor_obj, name="extractor", serialization_format="cloudpickle",)
-                mlflow.sklearn.log_model(sk_model=clf_object, name="predictor")
+                mlflow.sklearn.log_model(sk_model=clf_object, name="predictor", serialization_format="cloudpickle",)
 
                 mlflow.log_metric("mean_train_accuracy", np.mean(train_accuracy_scores))
                 mlflow.log_metric("std_train_accuracy", np.std(train_accuracy_scores))
@@ -268,12 +251,63 @@ def log_detailed_results(
     return
 
 
+# TODO: MAKE PYDANTIC CLASSES
+def run_fold_experiment(
+    clf_ref,
+    clf_experiment_hyperparameters: dict[str, any],
+    parent_run_id: str,
+    fold_id: int,
+    fold: tuple[
+        pd.Series,
+        pd.Series,
+        pd.DataFrame,
+        pd.DataFrame,
+        pd.Series,
+        pd.Series
+    ],
+) -> tuple[float, float]:
+    clf_object = clf_ref(**clf_experiment_hyperparameters)
+
+    with mlflow.start_run(
+        run_name=f"fold_{fold_id}",
+        parent_run_id=parent_run_id,
+        nested=True
+    ):
+        train_ids, test_ids, X_train, X_test, y_train, y_test = fold
+
+        clf_object.fit(X_train, y_train)
+        train_predictions = clf_object.predict(X_train)
+        test_predictions = clf_object.predict(X_test)
+
+        train_accuracy = accuracy_score(y_train, train_predictions)
+        val_accuracy = accuracy_score(y_test, test_predictions)
+
+        log_detailed_results(
+            train_ids,
+            y_train,
+            train_predictions,
+            "train.csv"
+        )
+
+        log_detailed_results(
+            test_ids,
+            y_test,
+            test_predictions,
+            "test.csv"
+        )
+
+        mlflow.log_metric("train_accuracy", train_accuracy)
+        mlflow.log_metric("val_accuracy", val_accuracy)
+
+    return train_accuracy, val_accuracy
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument("--ml_pipeline_run_id", "-v", help="Machine Learning Pipeline Run ID")
     parser.add_argument("--feature_extractor_name", "-f", help="Feature Extractor Dir Name")
-    parser.add_argument("--experiment_name", "-e", help="Number of folds in the TimeSeriesSplit")
+    parser.add_argument("--experiment_name", "-e", help="MLflow Experiment Name")
     args = parser.parse_args()
 
     main(args.ml_pipeline_run_id, args.experiment_name)
