@@ -1,7 +1,6 @@
 import sys
 import os
 import argparse
-from concurrent.futures import ThreadPoolExecutor
 import itertools
 import mlflow
 
@@ -20,9 +19,7 @@ from sklearn.metrics import accuracy_score
 
 from common.minio_utils import MinioClient
 from feature_extractors.constants import FIGHT_ID_COLUMN
-from ml_helpers.io import ORIGINAL_DATA_DIR
 from ml_helpers.io import (
-    extract_basename_from_path,
     read_dataset_instance_from_minio,
     read_folds_from_dataset_instance,
     read_feature_extractor_from_dataset_instance
@@ -180,7 +177,7 @@ def main(
                 train_accuracy_scores = [r[0] for r in results]
                 val_accuracy_scores = [r[1] for r in results]
 
-                _, _, X_train, X_test, y_train, y_test = all_data
+                _, _, X_train, _, y_train, _ = all_data
 
                 clf_object = clf_ref(**curr_hyperparameters)
                 clf_object.fit(X_train, y_train)

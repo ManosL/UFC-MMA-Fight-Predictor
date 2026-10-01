@@ -56,6 +56,14 @@ def run_and_log_mlflow_experiments_for_extractor_venv(
     return
 
 
+def retrieve_best_run_id_venv(
+    mlflow_experiment_name: str,
+) -> None:
+    from retrieve_best_run_id import main
+
+    return main(mlflow_experiment_name)
+
+
 with DAG(
     dag_id="ml_pipeline",
     params={
@@ -110,9 +118,19 @@ with DAG(
         op_kwargs=apply_preprocessing_and_feature_engineering_task.output
     )
 
+    retrieve_best_run_id_task = PythonVirtualenvOperator(
+        task_id="retrieve_best_run_id",
+        python_callable=retrieve_best_run_id_venv,
+        op_kwargs={
+            "mlflow_experiment_name": "{{ ti.xcom_pull(task_ids='determine_version_id') or params.mlflow_experiment_name }}"
+        },
+        requirements=ml_requirements,
+        system_site_packages=False,
+    )
+
     end_task = EmptyOperator(task_id="end_processing")
 
     start_task >> determine_version_id_task >> write_and_split_training_data_to_minio_task
     write_and_split_training_data_to_minio_task >> apply_preprocessing_and_feature_engineering_task
     apply_preprocessing_and_feature_engineering_task >> run_and_log_mlflow_experiments_task
-    run_and_log_mlflow_experiments_task >> end_task
+    run_and_log_mlflow_experiments_task >> retrieve_best_run_id_task >> end_task
