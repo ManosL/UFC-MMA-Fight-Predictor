@@ -1,10 +1,11 @@
 import sys
 import os
 import argparse
+from copy import deepcopy
 import itertools
 import mlflow
 
-from typing import Sequence
+from typing import Any, Sequence
 
 import numpy as np
 import pandas as pd
@@ -89,6 +90,27 @@ EXPERIMENTS_HYPERPARAMETERS = [
 ]
 
 
+class MLflowRunInferencePipelinerModel(mlflow.pyfunc.PythonModel):
+    def __init__(
+        self,
+        extractor,
+        predictor,
+    ):
+        self.extractor = deepcopy(extractor)
+        self.predictor = deepcopy(predictor)
+
+    def predict(
+        self,
+        context: Any,
+        model_input: pd.DataFrame,
+        params: dict = None
+    ) -> pd.DataFrame:
+        return self.predictor.predict(
+            self.extractor.transform(model_input)
+        )
+
+
+
 def main(
     ml_pipeline_run_id: str,
     feature_extractor_name: str,
@@ -166,6 +188,7 @@ def main(
                     (
                         clf_ref,
                         curr_hyperparameters,
+                        experiment.experiment_id,
                         parent_run_id,
                         i+1,
                         fold
@@ -182,9 +205,14 @@ def main(
                 clf_object = clf_ref(**curr_hyperparameters)
                 clf_object.fit(X_train, y_train)
 
-                # TODO: MAYBE UNIFY THEM IN A SINGLE PIPELINE
-                mlflow.sklearn.log_model(sk_model=extractor_obj, name="extractor", serialization_format="cloudpickle",)
-                mlflow.sklearn.log_model(sk_model=clf_object, name="predictor", serialization_format="cloudpickle",)
+                mlflow.sklearn.log_model(
+                    sk_model=MLflowRunInferencePipelinerModel(
+                        extractor=extractor_obj,
+                        predictor=clf_object,
+                    ), 
+                    name="inference_pipeline", 
+                    serialization_format="cloudpickle",
+                )
 
                 mlflow.log_metric("mean_train_accuracy", np.mean(train_accuracy_scores))
                 mlflow.log_metric("std_train_accuracy", np.std(train_accuracy_scores))
@@ -252,6 +280,7 @@ def log_detailed_results(
 def run_fold_experiment(
     clf_ref,
     clf_experiment_hyperparameters: dict[str, any],
+    experiment_id: str,
     parent_run_id: str,
     fold_id: int,
     fold: tuple[
@@ -267,6 +296,7 @@ def run_fold_experiment(
 
     with mlflow.start_run(
         run_name=f"fold_{fold_id}",
+        experiment_id=experiment_id,
         parent_run_id=parent_run_id,
         nested=True
     ):

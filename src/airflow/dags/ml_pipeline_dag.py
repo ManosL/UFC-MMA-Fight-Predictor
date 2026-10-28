@@ -64,6 +64,14 @@ def retrieve_best_run_id_venv(
     return main(mlflow_experiment_name)
 
 
+def deploy_best_model_venv(
+    best_run_id: str,
+) -> None:
+    from deploy_best_model import main
+
+    return main(best_run_id)
+
+
 with DAG(
     dag_id="ml_pipeline",
     params={
@@ -128,9 +136,20 @@ with DAG(
         system_site_packages=False,
     )
 
+    deploy_best_model_task = PythonVirtualenvOperator(
+        task_id="deploy_best_model",
+        python_callable=deploy_best_model_venv,
+        op_kwargs={
+            "best_run_id": "{{ ti.xcom_pull(task_ids='retrieve_best_run_id') }}"
+        },
+        requirements=ml_requirements,
+        system_site_packages=False,
+    )
+
     end_task = EmptyOperator(task_id="end_processing")
 
     start_task >> determine_version_id_task >> write_and_split_training_data_to_minio_task
     write_and_split_training_data_to_minio_task >> apply_preprocessing_and_feature_engineering_task
     apply_preprocessing_and_feature_engineering_task >> run_and_log_mlflow_experiments_task
-    run_and_log_mlflow_experiments_task >> retrieve_best_run_id_task >> end_task
+    run_and_log_mlflow_experiments_task >> retrieve_best_run_id_task 
+    retrieve_best_run_id_task  >> deploy_best_model_task >> end_task

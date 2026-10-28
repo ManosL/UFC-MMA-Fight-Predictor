@@ -25,7 +25,7 @@ def main(
     experiment_runs = mlflow.search_runs(
         experiment_names=[experiment_name],
         filter_string="attribute.status = 'FINISHED' AND tags.mlflow.parentRunId IS NULL",
-        format='list'
+        output_format='list'
     )
 
     best_run = experiment_runs[0]
