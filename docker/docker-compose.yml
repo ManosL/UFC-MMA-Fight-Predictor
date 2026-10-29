@@ -230,6 +230,33 @@ services:
       timeout: 5s
       retries: 30
 
+  # For streamlit and the ones that install requirements it would be
+  # better to have them as dockerfiles in order to not install requirements
+  # at every start up
+  streamlit:
+    image: python:3.12-slim
+    working_dir: /streamlit
+    volumes:
+      - ../src/machine_learning/streamlit:/streamlit
+      - pip-cache:/root/.cache/pip   # speed up pip installs
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONPATH=/streamlit
+    ports:
+      - "${STREAMLIT_PORT}:${STREAMLIT_PORT}"
+    entrypoint: /bin/sh -lc
+    command: |
+      'python -m pip install --upgrade pip &&
+       if [ -f requirements.txt ]; then pip install -r requirements.txt; fi &&
+       streamlit run streamlit_app.py --server.port=${STREAMLIT_PORT} --server.address=0.0.0.0'
+    healthcheck:
+      test: ["CMD", "curl --fail http://localhost:${STREAMLIT_PORT}/_stcore/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
 networks:
   default: # default keyword helps us not having to go to each service and attach them to this network
     name: ufc_infra_network
